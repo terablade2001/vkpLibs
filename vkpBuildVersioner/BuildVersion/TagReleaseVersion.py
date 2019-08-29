@@ -34,6 +34,8 @@ PyBuildVersionPath = "../python/BuildVersion/"
 PyFormat = 1
 # Define Global Version File
 VersionFile = "BuildVersion.hpp"
+# Define C++ Makes
+CppMakes=["../C++/make-build.cmd"]
 
 def TagBuildVersion(format, versionfile, buildversionpath):
   dbg = False
@@ -46,6 +48,10 @@ def TagBuildVersion(format, versionfile, buildversionpath):
   with open(ProjectStateFile,"w") as wfp:
     print("0",file=wfp,end='')
 
+  # Build all C++ projects (Only one should update the version)
+  for m in CppMakes:
+    subprocess.call([FF+m])
+
   # Use the global version file and update the version.
   Lines = [line.rstrip('\n') for line in open(versionfile)]
   version_number=[]
@@ -55,9 +61,11 @@ def TagBuildVersion(format, versionfile, buildversionpath):
     BV = int(l[ps+2:pe])
     break
 
-  BV = BV + 1
-  with open(versionfile,"w") as wfp:
-    print("#define VERSION_NUMBER (%i.0)"%(BV),file=wfp)
+  # If there are no C++ projects, update manually the version.
+  if len(CppMakes) == 0:
+    BV = BV + 1
+    with open(versionfile,"w") as wfp:
+      print("#define VERSION_NUMBER (%i.0)"%(BV),file=wfp)
   with open(InternalVersion,"w") as wfp:
     print("(%i.0)"%(BV),file=wfp)
 

@@ -57,12 +57,96 @@ When there is a code ready for release, then the developer can call the non-rele
 
 It's up to user's preference then to push tags and commit to different remotes.
 
-The `TagReleaseVersion.py project should be configured at the start of the project to show to the BuildVersion python library. I.e.:
+The `TagReleaseVersion.py` file should be configured at the start of the project with proper values as shown below.
+
+- PyBuildVersionPath: Is the Relative path to the python [BuildVersion] module.
+- PyFormat: Is the format that will store the tags (1,2 or 3)
+- VersionFile: Is the relative path to the global Versioning file which is as C++ definition.
+- CppMakes: Is a list of relative paths to all batch files that should be called in order to compile C++ relatives libraries and executables with the proper version before commit it. In general only one such batch file should call the C++ version updating system (i.e. using pre-build call) thus version to be updated correcly for all related C++ and Python compilations. If there are no C++ projects the list can be empty.
+
+Note: If there is no Python project then `TagReleaseVersion.py` is not actually required.
 
 ```python
 # Update this path to show to project's [BuildVersion] library
 PyBuildVersionPath = "../python/BuildVersion/"
 # Define the format of the tag.
 PyFormat = 1
+# Define Global Version File
+VersionFile = "BuildVersion.hpp"
+# Define C++ Makes
+CppMakes=["../C++/make-build.cmd"]
 ```
 
+
+
+## Demo Example
+
+This repo is also a demo where you want to send to a client an executable (Example.exe) along with a python project (Test.py) marked with specific version. This demo example is written for the version 0.002 of this repo.
+
+Clone this repo to a temporal folder to work on the demo.
+
+First lest build the C++ example.
+
+```shell
+cd C++
+cmake-build.cmd
+make-build.cmd
+cd build
+Example.exe
+# >> [0.003]
+# >> [0.000.003]
+# >> [0.000.000.003]
+cd ../../python
+python3 Test.py
+# >> Version: [0.004]
+cd ..
+```
+
+Thus now we have a compiled C++ executable with version [0.003] and a Test.py with version [0.004]. We want to share these to a client but also keep a common version to our git. Use:
+
+```shell
+cd BuildVersion
+python3 TagReleaseVersion.py
+cd ..
+```
+
+Now we have a new commit [0.005] in our repo with tag 0.005.
+We have to check that the shared files (Example.exe and Test.py) have the correct version.
+
+```shell
+cd C++/build
+Example.exe
+# >> [0.005]
+# >> [0.000.005]
+# >> [0.000.000.005]
+cd ../../python
+python3 Test.py
+# >> [0.005]
+```
+
+The released files C++ and Python are synced with git tag 0.005. SUCCESS.
+
+Now notice that every time that you run the Test.py the version remains to [0.005]:
+
+```shell
+python3 Test.py
+# >> [0.005]
+python3 Test.py
+# >> [0.005]
+python3 Test.py
+# >> [0.005]
+```
+
+This is because this is a Release version.  In order to revert to Debug version again in order to continue development we have to change the flag of the `project.state` file in the `BuildVersion` python library:
+
+```shell
+echo 1 > BuildVersion/project.state
+python3 Test.py
+# >> [0.006]
+python3 Test.py
+# >> [0.007]
+```
+
+If you try now again the `TagReleaseVersion.py` you will get a synchronized set of files at tag 0.008. 
+
+It works! :)
