@@ -32,16 +32,22 @@
 
 #ifndef __VKPPROGRESSBAR__HEADER_FILE__
 #define __VKPPROGRESSBAR__HEADER_FILE__
-
-#ifndef __STDEXCEPT_VKP_HEADER_FILE__
-#define __STDEXCEPT_VKP_HEADER_FILE__
-	#include <stdexcept>
-	#include <cstring>
-	#ifndef __FNAME__
-		#define __FNAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+#define __VKPPROGRESSBAR__VERSION__ (0.003)
+#ifdef __ECSOBJ__
+ #include <CECS.hpp>
+ static CECS __ECSOBJ__("vkpProgressBar");
+#else
+	#ifndef __STDEXCEPT_VKP_HEADER_FILE__
+	#define __STDEXCEPT_VKP_HEADER_FILE__
+		#include <stdexcept>
+		#include <cstring>
+		#ifndef __FNAME__
+			#define __FNAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+		#endif
+		#define MAKE_ERRSTR std::stringstream ErrStr;\
+			ErrStr << "["<<__FNAME__<<", L-"<<__LINE__<< "]: "
+		#define THROW_ERRSTR throw std::runtime_error(ErrStr.str().c_str());
 	#endif
-	#define MAKE_ERRSTR std::stringstream ErrStr;\
-		ErrStr << "["<<__FNAME__<<", L-"<<__LINE__<< "]: "
 #endif
 
 #include <stdio.h>
@@ -67,14 +73,19 @@ public:
 		const float Max_,
 		const int Spaces_
 	): Min(Min_), Max(Max_), Spaces(Spaces_), curr_space(1) {
-		if (Max <= Min) { MAKE_ERRSTR;
-			ErrStr << "vkpProgressBar():: Max("<<Max_<<") <= Min("<<Min_<<")." << endl;
-			THROW_ERRSTR;
-		}
-		if (Spaces_ <=1) { MAKE_ERRSTR;
-			ErrStr << "vkpProgressBar():: Spaces("<<Spaces_<<") must be > 1." << endl;
-			THROW_ERRSTR;
-		}
+		#ifdef __ECSOBJ__
+			_ERR(Max <= Min,"vkpProgressBar():: Max(%f) <= Min(%f).",Max_,Min_)
+			_ERR(Spaces_<=1,"vkpProgressBar():: Spaces(%i) must be > 1.",Spaces_)
+		#else
+			if (Max <= Min) { MAKE_ERRSTR;
+				ErrStr << "vkpProgressBar():: Max("<<Max_<<") <= Min("<<Min_<<")." << endl;
+				THROW_ERRSTR;
+			}
+			if (Spaces_ <=1) { MAKE_ERRSTR;
+				ErrStr << "vkpProgressBar():: Spaces("<<Spaces_<<") must be > 1." << endl;
+				THROW_ERRSTR;
+			}
+		#endif
 		if (Spaces > 512) Spaces = 512;
 		Open[0]     = Open_[0];
 		Close[0]    = Close_[0];
@@ -86,8 +97,8 @@ public:
 		printf("%s",Close);
 	}
 	
-	void Update(float iter_value) {
-		if (curr_space == Spaces) return;
+	int Update(float iter_value) {
+		if (curr_space == Spaces) return 0;
 		if (iter_value < Min) iter_value = Min;
 		else if (iter_value > Max) iter_value = Max-1;
 
@@ -95,7 +106,7 @@ public:
 		const float ratio = (iter_value-Min) / Diff;
 		int target_space = floor(ratio*Spaces)+1;
 		// cout <<target_space<<", "<<curr_space<<endl;
-		if (target_space == curr_space) return;
+		if (target_space == curr_space) return 0;
 		else if (target_space > curr_space) {
 			// cout <<target_space<<", "<<curr_space<<", "<<Spaces+2-curr_space<<endl;
 			if (target_space > Spaces) target_space = Spaces;
@@ -123,10 +134,15 @@ public:
 		}
 		fflush(stdout);
 		if (curr_space > Spaces) curr_space = Spaces;
-		if (target_space < curr_space) { MAKE_ERRSTR;
-			ErrStr << "vkpProgressBar():: Negative progress not supported!" << endl;
-			THROW_ERRSTR;
-		}
+		#ifdef __ECSOBJ__
+			_ERRI(target_space < curr_space,"vkpProgressBar():: Negative progress not supported!")
+		#else
+			if (target_space < curr_space) { MAKE_ERRSTR;
+				ErrStr << "vkpProgressBar():: Negative progress not supported!" << endl;
+				THROW_ERRSTR;
+			}
+		#endif
+		return 0;
 	}
 	
 private:
