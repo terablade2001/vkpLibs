@@ -32,11 +32,9 @@
 
 #ifndef __VKPPROGRESSBAR__HEADER_FILE__
 #define __VKPPROGRESSBAR__HEADER_FILE__
-#define __VKPPROGRESSBAR__VERSION__ (0.003)
-#ifdef __ECSOBJ__
- #include <CECS.hpp>
- static CECS __ECSOBJ__("vkpProgressBar");
-#else
+#define __VKPPROGRESSBAR__VERSION__ (0.004)
+
+#ifndef __ECSOBJ__
 	#ifndef __STDEXCEPT_VKP_HEADER_FILE__
 	#define __STDEXCEPT_VKP_HEADER_FILE__
 		#include <stdexcept>
@@ -52,6 +50,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <cmath>
 
 class vkpProgressBar {
 public:
@@ -72,79 +71,11 @@ public:
 		const float Min_,
 		const float Max_,
 		const int Spaces_
-	): Min(Min_), Max(Max_), Spaces(Spaces_), curr_space(1) {
-		#ifdef __ECSOBJ__
-			_ERR(Max <= Min,"vkpProgressBar():: Max(%f) <= Min(%f).",Max_,Min_)
-			_ERR(Spaces_<=1,"vkpProgressBar():: Spaces(%i) must be > 1.",Spaces_)
-		#else
-			if (Max <= Min) { MAKE_ERRSTR;
-				ErrStr << "vkpProgressBar():: Max("<<Max_<<") <= Min("<<Min_<<")." << endl;
-				THROW_ERRSTR;
-			}
-			if (Spaces_ <=1) { MAKE_ERRSTR;
-				ErrStr << "vkpProgressBar():: Spaces("<<Spaces_<<") must be > 1." << endl;
-				THROW_ERRSTR;
-			}
-		#endif
-		if (Spaces > 512) Spaces = 512;
-		Open[0]     = Open_[0];
-		Close[0]    = Close_[0];
-		Progress[0] = Progress_[0];
-		Arrow[0]    = Arrow_[0];
-		
-		printf("%s%s",Open,Arrow);
-		for (int i = 0; i < Spaces-1; i++) printf(" ");
-		printf("%s",Close);
-	}
+	);
+
+	int Start();
 	
-	int Update(float iter_value) {
-		if (curr_space == Spaces) return 0;
-		if (iter_value < Min) iter_value = Min;
-		else if (iter_value > Max) iter_value = Max-1;
-
-		const float Diff = Max-Min;
-		const float ratio = (iter_value-Min) / Diff;
-		int target_space = floor(ratio*Spaces)+1;
-		// cout <<target_space<<", "<<curr_space<<endl;
-		if (target_space == curr_space) return 0;
-		else if (target_space > curr_space) {
-			// cout <<target_space<<", "<<curr_space<<", "<<Spaces+2-curr_space<<endl;
-			if (target_space > Spaces) target_space = Spaces;
-			
-			char bstr[514]={0};
-			const int maxi = (Spaces+2-curr_space > 500)?500:Spaces+2-curr_space;
-			for (int i = 0; i < maxi; i++) bstr[i]='\b';
-			printf(bstr);
-			printf(Progress);
-
-			for (; curr_space < target_space-1; curr_space++)
-				printf(Progress);
-
-			curr_space=target_space;
-
-			if (target_space < Spaces) {
-				printf(Arrow);
-				int cnt = 0;
-				for (; target_space < Spaces; target_space++) bstr[cnt++] = ' ';
-				bstr[cnt] = 0;
-				printf(bstr);
-				printf(Close);
-			}
-			else { printf(Progress); }
-		}
-		fflush(stdout);
-		if (curr_space > Spaces) curr_space = Spaces;
-		#ifdef __ECSOBJ__
-			_ERRI(target_space < curr_space,"vkpProgressBar():: Negative progress not supported!")
-		#else
-			if (target_space < curr_space) { MAKE_ERRSTR;
-				ErrStr << "vkpProgressBar():: Negative progress not supported!" << endl;
-				THROW_ERRSTR;
-			}
-		#endif
-		return 0;
-	}
-	
+	int Update(float iter_value);
 private:
 	vkpProgressBar(){}
 };
