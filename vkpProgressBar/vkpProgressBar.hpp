@@ -22,17 +22,14 @@
 // SOFTWARE.
 
 /* Example:
-	try {
-		vkpProgressBar vkpPB("[","]","=",">",0,1e9,20);
-		for (int i = 0; i < 1e9; i++) { vkpPB.Update(i); }
-	} catch(std::exception &e) {
-		 std::cout<< std::endl<<"(*) Exception occured: "<< std::endl << "  --> " << e.what() << std::endl;
-	}
+	vkpProgressBar vkpPB("[","]","=",">",0,1e9,20);
+	vkpPB.Start();
+	for (int i = 0; i < 1e9; i++) { vkpPB.Update(i); }
 */
 
 #ifndef __VKPPROGRESSBAR__HEADER_FILE__
 #define __VKPPROGRESSBAR__HEADER_FILE__
-#define __VKPPROGRESSBAR__VERSION__ (0.004)
+#define __VKPPROGRESSBAR__VERSION__ (0.005)
 
 #ifndef __ECSOBJ__
 	#ifndef __STDEXCEPT_VKP_HEADER_FILE__

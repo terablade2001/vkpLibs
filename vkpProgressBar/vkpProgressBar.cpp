@@ -1,6 +1,6 @@
 // MIT License
 
-// Copyright (c) 2017 - 2019 Vasileios Kon. Pothos (terablade2001)
+// Copyright (c) 2017 - 2020 Vasileios Kon. Pothos (terablade2001)
 // https://github.com/terablade2001
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -66,12 +66,13 @@ int vkpProgressBar::Start() {
     _ERRI(Max <= Min,"vkpProgressBar():: Max(%f) <= Min(%f).",Max,Min)
     _ERRI(Spaces<=1,"vkpProgressBar():: Spaces(%i) must be > 1.",Spaces)
   #endif
+  curr_space = 1;
   printf("%s%s",Open,Arrow);
   for (int i = 0; i < Spaces-1; i++) printf(" ");
   printf("%s",Close);
   return 0;
 }
-	
+
 int vkpProgressBar::Update(float iter_value) {
   if (curr_space == Spaces) return 0;
   if (iter_value < Min) iter_value = Min;
@@ -85,7 +86,7 @@ int vkpProgressBar::Update(float iter_value) {
   else if (target_space > curr_space) {
     // cout <<target_space<<", "<<curr_space<<", "<<Spaces+2-curr_space<<endl;
     if (target_space > Spaces) target_space = Spaces;
-    
+
     char bstr[514]={0};
     const int maxi = (Spaces+2-curr_space > 500)?500:Spaces+2-curr_space;
     for (int i = 0; i < maxi; i++) bstr[i]='\b';
