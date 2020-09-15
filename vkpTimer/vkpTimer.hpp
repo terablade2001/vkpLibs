@@ -35,7 +35,7 @@
 #include <sys/time.h>
 #endif
 
-#define VKPTIMER_VERSION (0.101)
+#define VKPTIMER_VERSION (0.102)
 
 class vkpTimer {
 private:
@@ -86,6 +86,7 @@ class vkpTimersMap {
   vkpTimer& addTimer(const char* timerName);
   vkpTimer& getTimer(const char* timerName);
   void clearTimers();
+  void resetTimers();
   std::string str();
 };
 

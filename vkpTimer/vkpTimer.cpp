@@ -146,6 +146,12 @@ void vkpTimersMap::clearTimers() {
   map.clear();
 }
 
+void vkpTimersMap::resetTimers() {
+  for (auto it = map.begin(); it != map.end(); it++) {
+    it->second.reset();
+  }
+}
+
 std::string vkpTimersMap::str() {
   std::stringstream ss;
   ss << "- Timers Map ["<<name<<"]:";
