@@ -53,7 +53,7 @@ float vkpTimer::getTimeDiff() {
   if (!enabled) return -1.0;
   if (calculate) {
     #ifndef _WIN32
-      diffTime = (((stopVal.tv_sec + stopVal.tv_usec * 1e-6) - (startVal.tv_sec + startVal.tv_usec * 1e-6)) * 1000))
+      diffTime = (((stopVal.tv_sec + stopVal.tv_usec * 1e-6) - (startVal.tv_sec + startVal.tv_usec * 1e-6)) * 1000);
     #else
       diffTime = (stopVal.QuadPart - startVal.QuadPart) * 1000.0 / lpFrequency.QuadPart;
     #endif
@@ -120,9 +120,10 @@ void vkpTimersMap::setName(const char* timersMapName) {
   name = std::string(timersMapName);
 }
 
-void vkpTimersMap::addTimer(const char* timerName) {
-  if (timerName == nullptr) return;
+vkpTimer& vkpTimersMap::addTimer(const char* timerName) {
+  if (timerName == nullptr) { return getTimer("vkpTimer-dummy"); }
   map.emplace(std::string(timerName),vkpTimer(std::string(timerName)));
+  return getTimer(timerName);
 }
 
 vkpTimer& vkpTimersMap::getTimer(const char* timerName) {
@@ -149,7 +150,11 @@ std::string vkpTimersMap::str() {
   std::stringstream ss;
   ss << "- Timers Map ["<<name<<"]:";
   if (!enabled) { ss<<" Disabled."; return ss.str(); }
-  for (auto it = map.begin(); it != map.end(); it++)
+  float totalAvgTime = 0.0f;
+  for (auto it = map.begin(); it != map.end(); it++) {
     ss << std::endl << "  " << it->second.str();
+    totalAvgTime += it->second.getAverageTime();
+  }
+  ss << std::endl << " * Total Avg. Time: " << totalAvgTime << " ms, for "<<map.size()<<" timers.";
   return ss.str();
 }
