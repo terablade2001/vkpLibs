@@ -69,9 +69,11 @@ std::vector<float>& vkpTimer::getTimeLog() {
 }
 
 float vkpTimer::getTotalTime() {
+  if (!enabled) return -2.0;
   return totalTime;
 }
 float vkpTimer::getAverageTime() {
+  if (!enabled) return -2.0;
   if (count == 0) return -1.0;
   return totalTime / ((float)count);
 }
@@ -154,13 +156,17 @@ void vkpTimersMap::resetTimers() {
 
 std::string vkpTimersMap::str() {
   std::stringstream ss;
+  int timersUsed = 0;
   ss << "- Timers Map ["<<name<<"]:";
   if (!enabled) { ss<<" Disabled."; return ss.str(); }
   float totalAvgTime = 0.0f;
   for (auto it = map.begin(); it != map.end(); it++) {
     ss << std::endl << "  " << it->second.str();
-    totalAvgTime += it->second.getAverageTime();
+    if (it->second.getAverageTime() >= 0) {
+      totalAvgTime += it->second.getAverageTime();
+      timersUsed++;
+    }
   }
-  ss << std::endl << " * Total Avg. Time: " << totalAvgTime << " ms, for "<<map.size()<<" timers.";
+  ss << std::endl << " * Total Avg. Time: " << totalAvgTime << " ms, for "<<timersUsed<<"/"<<map.size()<<" timers.";
   return ss.str();
 }

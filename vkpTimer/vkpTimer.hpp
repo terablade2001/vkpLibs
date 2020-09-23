@@ -35,7 +35,7 @@
 #include <sys/time.h>
 #endif
 
-#define VKPTIMER_VERSION (0.102)
+#define VKPTIMER_VERSION (0.103)
 
 class vkpTimer {
 private:
