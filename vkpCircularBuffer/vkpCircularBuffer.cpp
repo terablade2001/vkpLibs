@@ -20,7 +20,10 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
+#include "../vkpVersion.hpp"
 #include "vkpCircularBuffer.hpp"
+
+namespace vkp {
 
 CECS_MODULE("vkpCircularBuffer")
 
@@ -184,5 +187,12 @@ int vkpCircularBuffer<T>::allSetTo(T&& value_) {
   return 0;
 }
 
+template <class T>
+std::string vkpCircularBuffer<T>::apiVersion() {
+  return std::string(__VKPLIBS__VERSION);
+}
+
 template class vkpCircularBuffer<int>;
 template class vkpCircularBuffer<float>;
+
+}; // namespace vkp;

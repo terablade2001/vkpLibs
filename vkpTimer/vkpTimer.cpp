@@ -21,7 +21,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include "../vkpVersion.hpp"
 #include "vkpTimer.hpp"
+
+namespace vkp {
 
 vkpTimer::vkpTimer(std::string timerName):
   logFlag(false),
@@ -95,6 +98,9 @@ std::string vkpTimer::str() {
   return ss.str();
 }
 
+std::string vkpTimer::apiVersion() {
+  return std::string(__VKPLIBS__VERSION);
+}
 
 
 
@@ -170,3 +176,9 @@ std::string vkpTimersMap::str() {
   ss << std::endl << " * Total Avg. Time: " << totalAvgTime << " ms, for "<<timersUsed<<"/"<<map.size()<<" timers.";
   return ss.str();
 }
+
+std::string vkpTimersMap::version() {
+  return std::string(__VKPLIBS__VERSION);
+}
+
+}; // namespace vkp;

@@ -27,6 +27,8 @@
 #endif
 #include <CECS.hpp>
 
+namespace vkp {
+
 template <class T>
 class vkpCircularBuffer {
   public:
@@ -58,6 +60,8 @@ class vkpCircularBuffer {
   int allSetTo(T& value_);
   int allSetTo(T&& value_);
 
+  std::string apiVersion();
+
   private:
   std::string name;
   int status;
@@ -65,3 +69,5 @@ class vkpCircularBuffer {
   std::vector<T> buffer;
   vkpCircularBuffer();
 };
+
+}; // namespace vkp

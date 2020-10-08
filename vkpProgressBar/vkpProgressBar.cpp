@@ -21,6 +21,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include "../vkpVersion.hpp"
 #include "vkpProgressBar.hpp"
 #ifdef __ECSOBJ__
 	#include <CECS.hpp>
@@ -28,6 +29,8 @@
 #endif
 
 using namespace std;
+
+namespace vkp {
 
 vkpProgressBar::vkpProgressBar(
   const char* Open_,
@@ -70,6 +73,7 @@ int vkpProgressBar::Start() {
   printf("%s%s",Open,Arrow);
   for (int i = 0; i < Spaces-1; i++) printf(" ");
   printf("%s",Close);
+  fflush(stdout);
   return 0;
 }
 
@@ -120,3 +124,8 @@ int vkpProgressBar::Update(float iter_value) {
   #endif
   return 0;
 }
+
+std::string vkpProgressBar::apiVersion() {
+  return string(__VKPLIBS__VERSION);
+}
+}; // namespace vkp

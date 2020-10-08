@@ -22,57 +22,67 @@
 // SOFTWARE.
 
 /*
-	Requires PRE/POST-Build execution of "UpdateBuildVersion.exe" which
-	updates the value of the BuildVersion.hpp file which contains for example:
-	"#define VERSION_NUMBER (8.0)"
+  Requires PRE/POST-Build execution of "UpdateBuildVersion.exe" which
+  updates the value of the BuildVersion.hpp file which contains for example:
+  "#define VERSION_NUMBER (8.0)"
 */
 
 #ifndef __VKP_BUILD_VERSIONER__HEADERFILE
 #define __VKP_BUILD_VERSIONER__HEADERFILE
+#include "../../vkpVersion.hpp"
 #include <cstdio>
 #include <cstdlib>
 #include <string>
 using namespace std;
+
+namespace vkp {
+
 class vkpBuildVersioner {
 public:
-	string version;
-	vkpBuildVersioner(int display = 0):version(), vnumber(0)
-	{
-		double vl = VERSION_NUMBER;
-		vkpBuildVersioner(display, vl);
-	}
+  string version;
+  vkpBuildVersioner(int display = 0):version(), vnumber(0)
+  {
+    double vl = VERSION_NUMBER;
+    vkpBuildVersioner(display, vl);
+  }
 
-	vkpBuildVersioner(int display, double vl):version(), vnumber(0)
-	{
-		version.clear();
-		vnumber = int(vl);
-		char v[256] = {0};
-		if (display == 3) {
-			int tr4 = size_t(vnumber / (1000000000));
-			int tr3 = size_t((vnumber-tr4*1000000000) / (1000000));
-			int tr2 = size_t((vnumber-tr4*1000000000-tr3*1000000) / (1000));
-			int tr1 = size_t(vnumber-tr4*1000000000-tr3*1000000-tr2*1000);
-			snprintf(v,255,"[%i.%3.3i.%3.3i.%3.3i]",tr4,tr3,tr2,tr1);
-			string tmpv(v);
-			version.append(tmpv);
-		} else if (display == 2) {
-			int tr3 = size_t((vnumber) / (1000000));
-			int tr2 = size_t((vnumber-tr3*1000000) / (1000));
-			int tr1 = size_t((vnumber-tr3*1000000-tr2*1000));
-			snprintf(v,255,"[%i.%3.3i.%3.3i]",tr3,tr2,tr1);
-			string tmpv(v);
-			version.append(tmpv);
-		} else {
-			int tr2 = size_t((vnumber) / (1000));
-			int tr1 = size_t((vnumber-tr2*1000));
-			snprintf(v,255,"[%i.%3.3i]",tr2,tr1);
-			string tmpv(v);
-			version.append(tmpv);
-		}
-	}
+  vkpBuildVersioner(int display, double vl):version(), vnumber(0)
+  {
+    version.clear();
+    vnumber = int(vl);
+    char v[256] = {0};
+    if (display == 3) {
+      int tr4 = size_t(vnumber / (1000000000));
+      int tr3 = size_t((vnumber-tr4*1000000000) / (1000000));
+      int tr2 = size_t((vnumber-tr4*1000000000-tr3*1000000) / (1000));
+      int tr1 = size_t(vnumber-tr4*1000000000-tr3*1000000-tr2*1000);
+      snprintf(v,255,"[%i.%3.3i.%3.3i.%3.3i]",tr4,tr3,tr2,tr1);
+      string tmpv(v);
+      version.append(tmpv);
+    } else if (display == 2) {
+      int tr3 = size_t((vnumber) / (1000000));
+      int tr2 = size_t((vnumber-tr3*1000000) / (1000));
+      int tr1 = size_t((vnumber-tr3*1000000-tr2*1000));
+      snprintf(v,255,"[%i.%3.3i.%3.3i]",tr3,tr2,tr1);
+      string tmpv(v);
+      version.append(tmpv);
+    } else {
+      int tr2 = size_t((vnumber) / (1000));
+      int tr1 = size_t((vnumber-tr2*1000));
+      snprintf(v,255,"[%i.%3.3i]",tr2,tr1);
+      string tmpv(v);
+      version.append(tmpv);
+    }
+  }
+
+  std::string apiVersion() {
+    return std::string(__VKPLIBS__VERSION);
+  }
 
 private:
-	int vnumber;
+  int vnumber;
 };
+
+}; // namespace vkp
 
 #endif

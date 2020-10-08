@@ -26,6 +26,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace vkp;
 
 static vkpBuildVersioner BV1(1, VERSION_NUMBER);
 static vkpBuildVersioner BV2(2, VERSION_NUMBER);

@@ -35,7 +35,7 @@
 #include <sys/time.h>
 #endif
 
-#define VKPTIMER_VERSION (0.103)
+namespace vkp {
 
 class vkpTimer {
 private:
@@ -71,6 +71,7 @@ public:
   void reset();
 
   std::string str();
+  std::string apiVersion();
 };
 
 
@@ -88,6 +89,7 @@ class vkpTimersMap {
   void clearTimers();
   void resetTimers();
   std::string str();
+  std::string version();
 };
 
 
@@ -117,3 +119,5 @@ inline void vkpTimer::stop() {
   count++;
   getTimeDiff();
 }
+
+}; // namespace vkp
