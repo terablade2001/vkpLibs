@@ -51,11 +51,13 @@ class vkpCircularBuffer {
   T& get();
   T& get(int64_t pos_);
   T& getMove(int64_t pos_, int64_t moveSteps_);
+  T& getRelativeMove(int64_t pos_=0, int64_t moveSteps_=1);
   int set(T& value_);
   int set(T&& value_);
   int set(int64_t pos_, T& value_);
   int setMove(T& value_, int64_t moveSteps_);
   int setMove(T&& value_, int64_t moveSteps_);
+  int move(int64_t moveSteps_=1);
 
   int allSetTo(T& value_);
   int allSetTo(T&& value_);

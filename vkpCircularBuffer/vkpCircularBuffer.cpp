@@ -134,6 +134,13 @@ T& vkpCircularBuffer<T>::getMove(int64_t pos_, int64_t moveSteps_) {
   return buffer[absoluteIndex];
 }
 
+template <class T>
+T& vkpCircularBuffer<T>::getRelativeMove(int64_t pos_, int64_t moveSteps_) {
+  _ERRO(status < 0, {static T ret; return ret; }, "vkpCircularBuffer [%s]: Not Initialized yet!", name.c_str())
+  int64_t absoluteIndex = std::abs(idx+pos_)%(int64_t)buffer.size();
+  idx += moveSteps_;
+  return buffer[absoluteIndex];
+}
 
 template <class T>
 int vkpCircularBuffer<T>::set(T& value_) {
@@ -163,6 +170,14 @@ int vkpCircularBuffer<T>::setMove(T&& value_, int64_t moveSteps_) {
   _ERRI(setMove(value_, moveSteps_), "setMove failed!")
   return 0;
 }
+
+template <class T>
+int vkpCircularBuffer<T>::move(int64_t moveSteps_) {
+  _ERRI(status < 0,"vkpCircularBuffer [%s]: Not Initialized yet!", name.c_str())
+  idx += moveSteps_;
+  return 0;
+}
+
 
 template <class T>
 int vkpCircularBuffer<T>::set(int64_t pos_, T& value_) {
