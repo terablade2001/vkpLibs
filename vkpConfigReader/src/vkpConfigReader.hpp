@@ -51,6 +51,8 @@ int cfg_ValueConvert(std::string&& string_value, T& value);
 
 template <typename T>
 int cfg_GetParam(cfg_type& cfg_data, const char* param, T& value);
+template <typename T>
+int cfg_GetParam(cfg_type& cfg_data, const char* param, std::vector<T>& value);
 
 int cfg_CheckParams(
   cfg_type& cfg_data,
@@ -110,7 +112,6 @@ int inline cfg_GetParam(cfg_type& cfg_data, const char* param, T& value) {
     std::endl;
     return -1;
   }
-  std::string string_param(param);
   auto it = std::find_if(cfg_data.begin(), cfg_data.end(),
       [param](const std::pair<std::string, std::string>& el) {
         return el.first == param;
@@ -157,6 +158,34 @@ int inline cfg_convertToVector(std::string& string_value, std::vector<T>& output
     str = str.substr(p+1);
     p = str.find(",");
     if (p == std::string::npos) breakv++;
+  }
+  return 0;
+}
+
+
+template <typename T>
+int inline cfg_GetParam(cfg_type& cfg_data, const char* param, std::vector<T>& value) {
+  if (param == nullptr) {
+    std::cout << "cfg_GetParam():: Error: 2nd argument == NULL. Aborting." <<
+    std::endl;
+    return -1;
+  }
+  auto it = std::find_if(cfg_data.begin(), cfg_data.end(),
+      [param](const std::pair<std::string, std::string>& el) {
+        return el.first == param;
+      }
+    );
+
+  if (it == cfg_data.end()) {
+    std::cout << "cfg_GetParam():: Error: [" << param << "] not found!" <<
+    std::endl;
+    return -1;
+  }
+
+
+  if (0!=cfg_convertToVector((*it).second, value)) {
+    std::cout << "cfg_GetParam():: Error: Failed to convert string ["<<(*it).second<<"] to proper vector." << std::endl;
+    return -1;
   }
   return 0;
 }

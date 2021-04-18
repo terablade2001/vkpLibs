@@ -54,34 +54,44 @@ int main(int argc, char **argv) {
   std::string FilenameA;
   std::string FilenameB;
 
-  std::string Ints,Floats,Strings;
-
-  std::vector<int> vInts;
-  std::vector<float> vFloats;
-  std::vector<std::string> vStrings;
-
   cfg_GetParam(cfg_data, "Mode", Mode);
   cfg_GetParam(cfg_data, "FileA", FilenameA);
   cfg_GetParam(cfg_data, "FileB", FilenameB);
   cfg_GetParam(cfg_data, "Rate", Rate);
-  cfg_GetParam(cfg_data, "Ints", Ints);
-  cfg_GetParam(cfg_data, "Floats", Floats);
-  cfg_GetParam(cfg_data, "Strings", Strings);
 
   std::cout << "Mode = [" << Mode << "]" << "|"<< std::endl;
   std::cout << "FileA = [" << FilenameA << "]" << "|"<< std::endl;
   std::cout << "FileB = [" << FilenameB << "]" << "|"<< std::endl;
   std::cout << "Rate = [" << Rate << "]" << "|"<< std::endl;
-  std::cout << "Ints = [" << Ints << "]" << "|"<< std::endl;
-  std::cout << "Floats = [" << Floats << "]" << "|"<< std::endl;
-  std::cout << "Strings = [" << Strings << "]" << "|"<< std::endl;
 
-  cfg_convertToVector(Ints,vInts);
-  cfg_convertToVector(Floats,vFloats);
-  cfg_convertToVector(Strings,vStrings);
+  // -- Directly loadign Vectors from strings seperated with ',' ---------------
+  std::vector<int> vInts;
+  std::vector<float> vFloats;
+  std::vector<std::string> vStrings;
+  cfg_GetParam(cfg_data, "Ints", vInts);
+  cfg_GetParam(cfg_data, "Floats", vFloats);
+  cfg_GetParam(cfg_data, "Strings", vStrings);
   std::cout << "Ints: "; for (auto& i : vInts) { std::cout <<"["<< i <<"] "; } std::cout << "|"<< std::endl;
   std::cout << "Floats: "; for (auto& i : vFloats) { std::cout <<"["<< i <<"] "; } std::cout << "|"<< std::endl;
   std::cout << "Strings: "; for (auto& i : vStrings) { std::cout <<"["<< i <<"] "; } std::cout << "|"<< std::endl;
+  // ---------------------------------------------------------------------------
+
+  // -- Using cfg_convertToVector() on strings seperated with ',' --------------
+  // std::string Ints,Floats,Strings;
+  // cfg_GetParam(cfg_data, "Ints", Ints);
+  // cfg_GetParam(cfg_data, "Floats", Floats);
+  // cfg_GetParam(cfg_data, "Strings", Strings);
+  // std::cout << "Ints = [" << Ints << "]" << "|"<< std::endl;
+  // std::cout << "Floats = [" << Floats << "]" << "|"<< std::endl;
+  // std::cout << "Strings = [" << Strings << "]" << "|"<< std::endl;
+
+  // std::vector<int> vInts;
+  // std::vector<float> vFloats;
+  // std::vector<std::string> vStrings;
+  // cfg_convertToVector(Ints,vInts);
+  // cfg_convertToVector(Floats,vFloats);
+  // cfg_convertToVector(Strings,vStrings);
+  // ---------------------------------------------------------------------------
 
   std::cout << std::endl;
 
