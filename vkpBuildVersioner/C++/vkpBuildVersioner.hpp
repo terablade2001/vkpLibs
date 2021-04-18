@@ -1,6 +1,6 @@
 // MIT License
 
-// Copyright (c) 2017 - 2019 Vasileios Kon. Pothos (terablade2001)
+// Copyright (c) 2017 - 2021 Vasileios Kon. Pothos (terablade2001)
 // https://github.com/terablade2001
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -25,6 +25,18 @@
   Requires PRE/POST-Build execution of "UpdateBuildVersion.exe" which
   updates the value of the BuildVersion.hpp file which contains for example:
   "#define VERSION_NUMBER (8.0)"
+
+  Example on getting the version:
+  static vkpBuildVersioner BV1(1, VERSION_NUMBER);
+  static vkpBuildVersioner BV2(2, VERSION_NUMBER);
+  static vkpBuildVersioner BV3(3, VERSION_NUMBER);
+
+  int main(int argc, char** argv) {
+    std::cout << BV1.version << std::endl;
+    std::cout << BV2.version << std::endl;
+    std::cout << BV3.version << std::endl;
+    return 0;
+  }
 */
 
 #ifndef __VKP_BUILD_VERSIONER__HEADERFILE

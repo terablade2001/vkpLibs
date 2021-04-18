@@ -27,7 +27,7 @@
 int main(int argc, char** argv) {
   FILE* fp = fopen("BuildVersion.hpp","r");
   size_t version = 0;
-  size_t subZeros = 3;
+  size_t subZeros = 1;
   if (argc == 2) {
     int requested_subz = atoi(argv[1]);
     if ((requested_subz >= 1) && (requested_subz <= 3)) {
