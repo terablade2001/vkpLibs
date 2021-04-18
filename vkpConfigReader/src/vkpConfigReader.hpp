@@ -1,6 +1,6 @@
 // MIT License
 
-// Copyright (c) 2017 - 2018 Vasileios Kon. Pothos (terablade2001)
+// Copyright (c) 2017 - 2021 Vasileios Kon. Pothos (terablade2001)
 // https://github.com/terablade2001/vkpConfigReader
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -42,10 +42,12 @@ std::string cfg_apiVersion();
 
 int cfg_LoadFile(const char* cfgfile, cfg_type& cfg_data);
 
-void cfg_ValueConvert(std::string& string_value, std::string& value);
+int cfg_ValueConvert(std::string& string_value, std::string& value);
 
 template <typename T>
-void cfg_ValueConvert(std::string& string_value, T& value);
+int cfg_ValueConvert(std::string& string_value, T& value);
+template <typename T>
+int cfg_ValueConvert(std::string&& string_value, T& value);
 
 template <typename T>
 int cfg_GetParam(cfg_type& cfg_data, const char* param, T& value);
@@ -62,7 +64,7 @@ int cfg_CheckParams(
 
 // ------------------------ Implementation -------------------------------------
 template <typename T>
-void inline cfg_ValueConvert(std::string& string_value, T& value) {
+int inline cfg_ValueConvert(std::string& string_value, T& value) {
    if (std::is_same<T, int>::value)
     value = std::stoi(string_value);
   else if (std::is_same<T, float>::value)
@@ -91,7 +93,14 @@ void inline cfg_ValueConvert(std::string& string_value, T& value) {
     }
   } else {
     std::cout << "cfg_ValueConvert(): Not defined type!" << std::endl;
+    return -1;
   }
+  return 0;
+}
+
+template <typename T>
+int inline cfg_ValueConvert(std::string&& string_value, T& value) {
+  return cfg_ValueConvert(string_value, value);
 }
 
 template <typename T>
@@ -114,7 +123,41 @@ int inline cfg_GetParam(cfg_type& cfg_data, const char* param, T& value) {
     return -1;
   }
 
-  cfg_ValueConvert((*it).second, value);
+  if (0!=cfg_ValueConvert((*it).second, value)) {
+    std::cout << "cfg_GetParam():: Error: Failed to convert string ["<<(*it).second<<"] to proper value." << std::endl;
+    return -1;
+  }
+  return 0;
+}
+
+
+template<typename T>
+int inline cfg_convertToVector(std::string& string_value, std::vector<T>& output) {
+  if (string_value.empty()) {
+    std::cout << "Can't convert empty string ["<<string_value<<"] to vector values."<<std::endl;
+    return -1;
+  }
+  std::string str = string_value;
+  output.clear();
+  int cnt = 0;
+  auto p = str.find(",");
+  int breakv = 0;
+  while (breakv < 2) {
+    T Value;
+    try {
+      if (p != std::string::npos) {
+        if (0!=cfg_ValueConvert(str.substr(0, p),Value)) { std::cout<<"Failed to convert value..."<<std::endl; return -1; }
+      } else {
+        if (0!=cfg_ValueConvert(str,Value)) { std::cout<<"Failed to convert value..."<<std::endl; return -1; }
+      }
+    } catch(std::exception &e) {
+      std::cout << "Failed to convert: ["<<str<<"], "<<cnt<<". Exception:\n"<<e.what()<<std::endl;
+    }
+    output.push_back(Value);
+    str = str.substr(p+1);
+    p = str.find(",");
+    if (p == std::string::npos) breakv++;
+  }
   return 0;
 }
 

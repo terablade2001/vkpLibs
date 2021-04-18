@@ -81,8 +81,9 @@ int cfg_LoadFile(const char* cfgfile, cfg_type& cfg_data) {
 }
 
 
-void cfg_ValueConvert(std::string& string_value, std::string& value) {
+int cfg_ValueConvert(std::string& string_value, std::string& value) {
   value.assign(string_value);
+  return 0;
 }
 
 
