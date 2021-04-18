@@ -65,8 +65,7 @@ int cfg_LoadFile(const char* cfgfile, cfg_type& cfg_data) {
     if (pos == std::string::npos) continue;
     if (pos == 0) continue;
 
-    cfg_data.push_back(
-      std::pair<std::string,std::string>(
+    cfg_data.emplace_back(std::make_pair(
         read_string.substr(0, pos),
         read_string.substr(pos+spacebar)
       )
@@ -77,6 +76,7 @@ int cfg_LoadFile(const char* cfgfile, cfg_type& cfg_data) {
       "] file." << std::endl;
     return -1;
   }
+  infile.close();
   return 0;
 }
 
