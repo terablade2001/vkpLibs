@@ -1,2 +1,2 @@
 #pragma once
-#define __VKPLIBS__VERSION "[0.206]"
+#define __VKPLIBS__VERSION "[0.207]"
