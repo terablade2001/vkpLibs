@@ -41,6 +41,7 @@
 
 #ifndef __VKP_BUILD_VERSIONER__HEADERFILE
 #define __VKP_BUILD_VERSIONER__HEADERFILE
+#include <BuildVersion/BuildVersion.hpp>
 #include "../../vkpVersion.hpp"
 #include <cstdio>
 #include <cstdlib>
