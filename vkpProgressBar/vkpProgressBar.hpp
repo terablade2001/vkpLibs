@@ -58,6 +58,7 @@ public:
   float Max;
   int Spaces;
   int curr_space;
+  bool printEnabled;
   char Open[2]={0};
   char Close[2]={0};
   char Progress[2]={0};

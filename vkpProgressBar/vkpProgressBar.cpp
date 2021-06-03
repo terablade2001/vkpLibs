@@ -40,7 +40,7 @@ vkpProgressBar::vkpProgressBar(
   const float Min_,
   const float Max_,
   const int Spaces_
-): Min(Min_), Max(Max_), Spaces(Spaces_), curr_space(1) {
+): Min(Min_), Max(Max_), Spaces(Spaces_), curr_space(1), printEnabled(true) {
   #ifdef __ECSOBJ__
     _ERR(Max <= Min,"vkpProgressBar():: Max(%f) <= Min(%f).",Max_,Min_)
     _ERR(Spaces_<=1,"vkpProgressBar():: Spaces(%i) must be > 1.",Spaces_)
@@ -70,17 +70,21 @@ int vkpProgressBar::Start() {
     _ERRI(Spaces<=1,"vkpProgressBar():: Spaces(%i) must be > 1.",Spaces)
   #endif
   curr_space = 1;
-  printf("%s%s",Open,Arrow);
-  for (int i = 0; i < Spaces-1; i++) printf(" ");
-  printf("%s",Close);
-  fflush(stdout);
+  if (printEnabled) {
+    printf("%s%s",Open,Arrow);
+    for (int i = 0; i < Spaces-1; i++) printf(" ");
+    printf("%s",Close);
+    fflush(stdout);
+  }
   return 0;
 }
 
 int vkpProgressBar::Update(float iter_value) {
+  if (!printEnabled) return 0;
   if (curr_space == Spaces) return 0;
   if (iter_value < Min) iter_value = Min;
   else if (iter_value > Max) iter_value = Max-1;
+
 
   const float Diff = Max-Min;
   const float ratio = (iter_value-Min) / Diff;
