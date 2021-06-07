@@ -155,6 +155,7 @@ int inline cfg_convertToVector(std::string& string_value, std::vector<T>& output
       std::cout << "Failed to convert: ["<<str<<"], "<<cnt<<". Exception:\n"<<e.what()<<std::endl;
     }
     output.push_back(Value);
+    if (p == std::string::npos) break;
     str = str.substr(p+1);
     p = str.find(",");
     if (p == std::string::npos) breakv++;
