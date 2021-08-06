@@ -7,4 +7,5 @@ A library of small code utilities.
 * **vkpCircularBuffer** [C++, Requires: CECS]: A very simple template-class for circular buffers where their index is treated alike infinite arrays.
 * **vkpTimer** [C++]: Classes for easily measuring and handling processing times between two points of code.
 * **vkpOpmlCpp** [C++]: Export data as strings to MindMap's opml format.
+* **vkpCSVHandler** [C++]: Load, handle and store CSV files in C++.
 
