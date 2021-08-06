@@ -34,6 +34,9 @@
   #include <string>
 #endif
 
+#define vkpConfigReaderLOADPARAM(x) \
+  _ERRI(0!=cfg_GetParam(cfg_data, #x, x),"Failed to process parameters ["#x"]")
+
 namespace vkpConfigReader {
 
 typedef std::vector<std::pair<std::string,std::string>> cfg_type;
