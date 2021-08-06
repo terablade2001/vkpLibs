@@ -24,6 +24,11 @@
 #include "../../vkpVersion.hpp"
 #include "vkpConfigReader.hpp"
 
+#ifdef __ECSOBJ__
+#include <CECS.hpp>
+CECS_MODULE("vkpConfigReader")
+#endif
+
 namespace vkpConfigReader {
 
 std::string cfg_apiVersion() {
@@ -31,33 +36,45 @@ std::string cfg_apiVersion() {
 }
 
 int cfg_LoadFile(const char* cfgfile, cfg_type& cfg_data) {
+#ifdef __ECSOBJ__
+  _ERRI(cfgfile == nullptr, "cfgfile == nullptr")
+#else
   if (cfgfile == nullptr) {
     std::cout << "LoadConfigFile: 1rsg arg = NULL. Aborting..." << std::endl;
     return -1;
   }
+#endif
 
   cfg_data.clear();
 
   std::string read_string;
   std::fstream infile;
   infile.open(cfgfile);
-  if (!infile.is_open()) {
-    std::cout << "cfg_LoadFile(): Failed to load [" << cfgfile << "] file." <<
-      std::endl;
-    return -1;
-  }
+  #ifdef __ECSOBJ__
+    _ERRI(!infile.is_open(),"Failed to load [%s] file.",cfgfile)
+  #else
+    if (!infile.is_open()) {
+      std::cout << "cfg_LoadFile(): Failed to load [" << cfgfile << "] file." <<
+        std::endl;
+      return -1;
+    }
+  #endif
   while(!infile.eof()) {
     size_t pos;
     std::getline(infile, read_string);
     pos = read_string.find("#",0);
     if (pos == 0) continue;
     pos = read_string.find(" ",0);
-    if (pos == 0) {
-      std::cout << "Error: " << std::string(cfgfile) << " contain space!" <<
-      std::endl;
-      infile.close();
-      return -1;
-    }
+    #ifdef __ECSOBJ__
+      _ERRO(pos==0,{infile.close(); return-1;}, "Error: [%s] contains first character space at line [%s]",cfgfile, read_string.c_str())
+    #else
+      if (pos == 0) {
+        std::cout << "Error: " << std::string(cfgfile) << " contain space!" <<
+        std::endl;
+        infile.close();
+        return -1;
+      }
+    #endif
 
     pos = read_string.find(": ",0,2);
     int spacebar=2;
@@ -71,11 +88,15 @@ int cfg_LoadFile(const char* cfgfile, cfg_type& cfg_data) {
       )
     );
   }
-  if (infile.bad()) {
-    std::cout << "cfg_LoadFile(): Error while reading [" << cfgfile <<
-      "] file." << std::endl;
-    return -1;
-  }
+  #ifdef __ECSOBJ__
+    _ERRI(infile.bad(), "Error while reading [%s] file.",cfgfile)
+  #else
+    if (infile.bad()) {
+      std::cout << "cfg_LoadFile(): Error while reading [" << cfgfile <<
+        "] file." << std::endl;
+      return -1;
+    }
+  #endif
   infile.close();
   return 0;
 }
@@ -109,5 +130,27 @@ int cfg_CheckParams(
   }
   return r;
 }
+
+#ifdef __ECSOBJ__
+int _baseDataLoader::loadConfigFile(std::string file) {
+  _ERRINF(1,"config file: [%s]", file.c_str())
+  cfg_type cfgData;
+  _ERRI(0!=cfg_LoadFile(file.c_str(), cfgData),"Failed to load config file")
+  std::string NotExistingParams;
+  int r = cfg_CheckParams(cfgData, getCheckParamList(), NotExistingParams);
+  _ERRSTR(r!=0,{ ss << "The following parameters were not found: \n" << "[" << NotExistingParams << "]"; })
+  _ERRI(r!=0,"Missing parameter in configuration file.")
+  _ERRI(0!=loadDataSection(cfgData),"Failed to load data")
+  _ECSCLS_
+  return 0;
+}
+int _baseDataLoader::loadConfigFile(char* file) {
+  _ERRI(file == nullptr,"file == nullptr")
+  return loadConfigFile(string(file));
+}
+int _baseDataLoader::loadConfigFile(const char* file) {
+  return loadConfigFile(const_cast<char*>(file));
+}
+#endif
 
 }; // namespace vkpConfigReader

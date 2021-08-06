@@ -35,7 +35,7 @@
 #endif
 
 #define vkpConfigReaderLOADPARAM(x) \
-  _ERRI(0!=cfg_GetParam(cfg_data, #x, x),"Failed to process parameters ["#x"]")
+  _ERRI(0!=cfg_GetParam(cfgData, #x, x),"Failed to process parameters ["#x"]")
 
 namespace vkpConfigReader {
 
@@ -63,8 +63,17 @@ int cfg_CheckParams(
   std::string& missing_params
 );
 
+#ifdef __ECSOBJ__
+class _baseDataLoader {
+  public:
+  virtual int loadDataSection(cfg_type& cfgData) = 0;
+  virtual std::vector<std::string>& getCheckParamList() = 0;
 
-
+  int loadConfigFile(std::string file);
+  int loadConfigFile(char* file);
+  int loadConfigFile(const char* file);
+};
+#endif
 
 
 // ------------------------ Implementation -------------------------------------
