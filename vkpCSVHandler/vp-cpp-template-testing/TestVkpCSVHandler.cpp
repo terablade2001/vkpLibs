@@ -58,9 +58,9 @@ int TestVkpCSVHandler(int argc, char** argv) {
       }
     }
 
-    vector<long long> VH2;
-    _ERRI(0!=csv.getIntColumn(2,VH2),"Failed to get vector column")
-    for (auto& i : VH2) { dbg_(63," : > "<< i)}
+    vector<long long> VH0;
+    _ERRI(0!=csv.getIntColumn((size_t)0,VH0),"Failed to get vector column")
+    for (auto& i : VH0) { dbg_(63," : > "<< i)}
   }
   return 0;
 }
