@@ -43,6 +43,7 @@
 #include <vector>
 #include <list>
 #include <map>
+#include <algorithm>
 
 namespace vkp {
 
@@ -83,8 +84,10 @@ public:
   );
   int loadFile(const char* fileName_, bool ignoreHeaders_ = false);
   int loadFile(std::string fileName_, bool ignoreHeaders_ = false);
-  int saveFile(const char* fileName_, bool ignoreHeaders_ = false);
-  int saveFile(std::string fileName_, bool ignoreHeaders_ = false);
+  int saveFile(const char* fileName_, bool ignoreHeaders_ = false, bool append_ = false);
+  int saveFile(std::string fileName_, bool ignoreHeaders_ = false, bool append_ = false);
+  int appendFile(const char* fileName_);
+  int appendFile(std::string fileName_);
 
   size_t rows();
   size_t columns();
@@ -98,6 +101,8 @@ public:
   void* getValPtr(const char* headerName_, size_t row_, unsigned char& type_);
   void* getValPtr(size_t column_, size_t row_, unsigned char& type_);
 
+  int getDataColumnPtr(const char* headerName_, std::vector<vkp::vkpCSVHandlerData>*& outPtr_);
+  int getDataColumnPtr(size_t column_, std::vector<vkp::vkpCSVHandlerData>*& outPtr_);
   int getIntColumn(const char* headerName_, std::vector<long long>& out_);
   int getIntColumn(size_t column_, std::vector<long long>& out_);
   int getDoubleColumn(const char* headerName_, std::vector<double>& out_);
@@ -118,9 +123,27 @@ public:
   int setStringColumn(const char* headerName_, std::vector<std::string>& inp_);
   int setStringColumn(size_t column_, std::vector<std::string>& inp_);
 
-  int addStringToColumn(std::string str_, size_t col_);
+  int addIntToColumn(long long val_, size_t col_);
+  int addIntToColumn(long long val_, const char* headerName_);
+  int addDoubleToColumn(double val_, size_t col_);
+  int addDoubleToColumn(double val_, const char* headerName_);
+  int addStringToColumn(std::string val_, size_t col_);
+  int addStringToColumn(std::string val_, const char* headerName_);
+  // Auto convert and add given string to target type by CSV headers.
+  int convertStringAddToColumn(std::string val_, size_t col_);
+  int convertStringAddToColumn(std::string val_, const char* headerName_);
+
+  int copyHeadersFrom(vkpCSVHandler& src_);
+  int createFrom(vkpCSVHandler& src_, size_t rowStartIdx_=0, size_t rowEndIdx_=(size_t)-1);
+
+  int removeRow(size_t rowIdx_);
+  int removeRows(std::vector<size_t> rowIdxs_);
+  int removeRows(std::vector<int> rowIdxs_);
+
   int getHeaderNameByColumn(size_t col_, std::string& headerName_);
   int getColumnByHeaderName(const char* headerName_, size_t& col);
+
+  int clear();
 
   std::string infoStr();
 
@@ -128,14 +151,14 @@ public:
   int checkIfAllColumnsHaveTheSameRows();
   std::string errString;
 
-private:
+
   std::string fieldDelimiter;
   std::string stringDelimiter;
   std::vector<std::string> headers;
   std::vector<unsigned char> headersTypes;
   std::map<std::string,std::vector<vkpCSVHandlerData>> data;
   std::string loadedFileName;
-
+private:
   int parseStringLine(std::string str_);
   int checkIfHeaderExist(const char* headerName_);
 };

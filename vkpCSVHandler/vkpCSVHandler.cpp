@@ -34,7 +34,7 @@ namespace vkp {
 vkpCSVHandlerData::vkpCSVHandlerData():
 type(DataType::NONE), i(0), d(0), s() {}
 
-vkpCSVHandlerData::vkpCSVHandlerData(int64_t i_):
+vkpCSVHandlerData::vkpCSVHandlerData(long long i_):
 type(DataType::INT), i(i_), d(0), s() {}
 
 vkpCSVHandlerData::vkpCSVHandlerData(double d_):
@@ -310,17 +310,83 @@ int vkpCSVHandler::getColumnByHeaderName(const char* headerName_, size_t& col) {
   return -1;
 }
 
-int vkpCSVHandler::addStringToColumn(std::string str_, size_t col_) {
-  string headerName;
-  _ERRI(0!=getHeaderNameByColumn(col_,headerName),"Failed to get header name of column [%zu]", col_)
-  _ERRI(0!=checkIfHeaderExist(headerName.c_str()),"Header check failed")
+
+int vkpCSVHandler::vkpCSVHandler::addIntToColumn(long long val_, const char* headerName_) {
+  _ERRI(headerName_ == nullptr,"headerName_ is nullptr")
+  string headerName(headerName_);
+  size_t col;
+  _ERRI(0!=getColumnByHeaderName(headerName.c_str(), col),"Failed to get column of header [%s]",headerName_);
   try {
-    data[headerName].emplace_back(str_, vkpCSVHandlerData::convertIdToDataType(headersTypes[col_]));
+    data[headerName].emplace_back(val_);
   } catch (std::exception& e) {
-    _ERRI(1,"Exception during adding [%s] to [%s]:\n[%s]",str_,headerName.c_str(), e.what())
+    _ERRI(1,"Exception during adding [%lli] to [%s]:\n[%s]",val_,headerName.c_str(), e.what())
   }
   return 0;
 }
+int vkpCSVHandler::vkpCSVHandler::addIntToColumn(long long val_, size_t col_) {
+  string headerName;
+  _ERRI(0!=getHeaderNameByColumn(col_,headerName),"Failed to get header name of column [%zu]", col_)
+  _ERRI(0!=addIntToColumn(val_,headerName.c_str()),"Failed to add INT value to columnt [%s]", headerName.c_str())
+  return 0;
+}
+
+int vkpCSVHandler::vkpCSVHandler::addDoubleToColumn(double val_, const char* headerName_) {
+  _ERRI(headerName_ == nullptr,"headerName_ is nullptr")
+  string headerName(headerName_);
+  size_t col;
+  _ERRI(0!=getColumnByHeaderName(headerName.c_str(), col),"Failed to get column of header [%s]",headerName_);
+  try {
+    data[headerName].emplace_back(val_);
+  } catch (std::exception& e) {
+    _ERRI(1,"Exception during adding [%lli] to [%s]:\n[%s]",val_,headerName.c_str(), e.what())
+  }
+  return 0;
+}
+int vkpCSVHandler::vkpCSVHandler::addDoubleToColumn(double val_, size_t col_) {
+  string headerName;
+  _ERRI(0!=getHeaderNameByColumn(col_,headerName),"Failed to get header name of column [%zu]", col_)
+  _ERRI(0!=addDoubleToColumn(val_,headerName.c_str()),"Failed to add DOUBLE value to columnt [%s]", headerName.c_str())
+  return 0;
+}
+
+int vkpCSVHandler::vkpCSVHandler::addStringToColumn(std::string val_, const char* headerName_) {
+  _ERRI(headerName_ == nullptr,"headerName_ is nullptr")
+  string headerName(headerName_);
+  size_t col;
+  _ERRI(0!=getColumnByHeaderName(headerName.c_str(), col),"Failed to get column of header [%s]",headerName_);
+  try {
+    data[headerName].emplace_back(val_, vkpCSVHandlerData::convertIdToDataType(headersTypes[col]));
+  } catch (std::exception& e) {
+    _ERRI(1,"Exception during adding [%lli] to [%s]:\n[%s]",val_,headerName.c_str(), e.what())
+  }
+  return 0;
+}
+int vkpCSVHandler::vkpCSVHandler::addStringToColumn(std::string val_, size_t col_) {
+  string headerName;
+  _ERRI(0!=getHeaderNameByColumn(col_,headerName),"Failed to get header name of column [%zu]", col_)
+  _ERRI(0!=addStringToColumn(val_,headerName.c_str()),"Failed to add STRING value to columnt [%s]", headerName.c_str())
+  return 0;
+}
+
+int vkpCSVHandler::vkpCSVHandler::convertStringAddToColumn(std::string val_, const char* headerName_) {
+  _ERRI(headerName_ == nullptr,"headerName_ is nullptr")
+  string headerName(headerName_);
+  size_t col;
+  _ERRI(0!=getColumnByHeaderName(headerName.c_str(), col),"Failed to get column of header [%s]",headerName_);
+  try {
+    data[headerName].emplace_back(val_, vkpCSVHandlerData::convertIdToDataType(headersTypes[col]));
+  } catch (std::exception& e) {
+    _ERRI(1,"Exception during adding [%lli] to [%s]:\n[%s]",val_,headerName.c_str(), e.what())
+  }
+  return 0;
+}
+int vkpCSVHandler::vkpCSVHandler::convertStringAddToColumn(std::string val_, size_t col_) {
+  string headerName;
+  _ERRI(0!=getHeaderNameByColumn(col_,headerName),"Failed to get header name of column [%zu]", col_)
+  _ERRI(0!=convertStringAddToColumn(val_,headerName.c_str()),"Failed to add STRING value to columnt [%s]", headerName.c_str())
+  return 0;
+}
+
 
 size_t vkpCSVHandler::rows() {
   _ERRO(headers.size() == 0, { return (size_t)-1; }, "No headers has been loaded.")
@@ -433,8 +499,19 @@ void* vkpCSVHandler::getValPtr(size_t column_, size_t row_, unsigned char& type_
 }
 
 
-
-
+  int vkpCSVHandler::getDataColumnPtr(const char* headerName_, std::vector<vkp::vkpCSVHandlerData>*& outPtr_) {
+    outPtr_ = nullptr;
+    _ERRI(0!=checkIfHeaderExist(headerName_),"Header check failed")
+    try { outPtr_ = &data[string(headerName_)]; }
+    catch (std::exception& e) { _ERRL(1,"std::map exception:\n[%s]",e.what()) }
+    _ERRI(outPtr_ == nullptr,"output pointer is null. Failed to get Data Column [%s]",headerName_)
+    return 0;
+  }
+  int vkpCSVHandler::getDataColumnPtr(size_t column_, std::vector<vkp::vkpCSVHandlerData>*& outPtr_) {
+    _ERRI(column_ >= columns(),"Requested column[=%zu] >= data columns [=%zu]",column_, columns());
+    _ERRI(0!=getDataColumnPtr(headers[column_].c_str(), outPtr_), "Failed to get INT vector data.")
+    return 0;
+  }
 
 int vkpCSVHandler::getIntColumn(const char* headerName_, std::vector<long long>& out_) {
   _ERRI(0!=checkIfHeaderExist(headerName_),"Header check failed")
@@ -600,12 +677,12 @@ int vkpCSVHandler::checkIfAllColumnsHaveTheSameRows() {
 
 
 
-int vkpCSVHandler::saveFile(const char* fileName_, bool ignoreHeaders_) {
+int vkpCSVHandler::saveFile(const char* fileName_, bool ignoreHeaders_, bool append_) {
   _ERRI(nullptr==fileName_,"fileName_ is nullptr")
-  _ERRI(0!=saveFile(string(fileName_),ignoreHeaders_),"failed to save.")
+  _ERRI(0!=saveFile(string(fileName_), ignoreHeaders_, append_),"failed to save.")
   return 0;
 }
-int vkpCSVHandler::saveFile(std::string fileName_, bool ignoreHeaders_) {
+int vkpCSVHandler::saveFile(std::string fileName_, bool ignoreHeaders_, bool append_) {
   _CHECKRI_
   _ERRINF(1,"CSV writting file [%s]",fileName_.c_str())
 
@@ -619,13 +696,17 @@ int vkpCSVHandler::saveFile(std::string fileName_, bool ignoreHeaders_) {
   _ERRI(headers.size() == 0,"headers size is 0!")
 
   std::ofstream outfile;
-  outfile.open(fileName_);
+  if (!append_) {
+    outfile.open(fileName_,std::ios_base::out);
+  } else {
+    outfile.open(fileName_,std::ios_base::app);
+  }
   _ERRI(!outfile.is_open(), "Failed to open CSV file for writting.")
 
   const size_t cols = columns(); _CHECKRI_
   const size_t rows = this->rows(); _CHECKRI_
   try {
-    if (!ignoreHeaders_) {
+    if ((!ignoreHeaders_) && (!append_)){
       stringstream ss;
       size_t headerSize = headers.size();
       for (size_t c = 0; c < headerSize; c++) {
@@ -637,6 +718,9 @@ int vkpCSVHandler::saveFile(std::string fileName_, bool ignoreHeaders_) {
       }
       ss << std::endl;
       outfile.write(ss.str().c_str(),ss.str().length());
+    }
+    if (append_) {
+      outfile.seekp(0,std::ios_base::end);
     }
 
     for (size_t r = 0; r < rows; r++) {
@@ -664,6 +748,89 @@ int vkpCSVHandler::saveFile(std::string fileName_, bool ignoreHeaders_) {
   } catch (std::exception& e) { _ERRI(1,"Exception:\n[%s]",e.what()) }
 
   _ECSCLS(1)
+  return 0;
+}
+
+int vkpCSVHandler::appendFile(const char* fileName_) {
+  return saveFile(fileName_, true, true);
+}
+int vkpCSVHandler::appendFile(std::string fileName_) {
+  return saveFile(fileName_, true, true);
+}
+
+int vkpCSVHandler::copyHeadersFrom(vkpCSVHandler& src_) {
+  clear(); _CHECKRI_
+
+  for (auto& header : src_.headers) {
+    headers.push_back(header);
+  }
+  for (auto& headerType : src_.headersTypes) {
+    headersTypes.push_back(headerType);
+  }
+  return 0;
+}
+
+int vkpCSVHandler::createFrom(vkpCSVHandler& src_, size_t rowStartIdx_, size_t rowEndIdx_) {
+  _ERRI(rowStartIdx_ > rowEndIdx_, "rowStartIdx_ [%zu] > rowEndIdx_ [%zu]", rowStartIdx_, rowEndIdx_)
+  _ERRI(0!=copyHeadersFrom(src_),"Failed to copy headers")
+
+  size_t cols = src_.columns(); _CHECKRI_
+  size_t rows = src_.rows(); _CHECKRI_
+  if (rowEndIdx_ == (size_t)-1) { rowEndIdx_ = rows; }
+  _ERRI(rowStartIdx_ >= rows,"Can't copy from row index [%zu] at destination with [%zu] rows", rowStartIdx_, rows);
+  _ERRI(rowEndIdx_ > rows,"Can't copy up to row index [%zu] at destination with [%zu] rows", rowEndIdx_, rows);
+
+  try {
+    for (size_t colIdx=0; colIdx < cols; colIdx++) {
+      std::vector<vkp::vkpCSVHandlerData>& dst = data[headers[colIdx]];
+      std::vector<vkp::vkpCSVHandlerData>& src = src_.data[headers[colIdx]];
+      dst = std::vector<vkp::vkpCSVHandlerData>(std::next(src.begin(),rowStartIdx_),std::next(src.begin(),rowEndIdx_));
+    }
+  } catch(std::exception& e) { _ERRI(1, "Exception:\n[%s]",e.what()) }
+
+  return 0;
+}
+
+int vkpCSVHandler::removeRow(size_t rowIdx_) {
+  const size_t totalRows = rows(); _CHECKRI_
+  _ERRI(rowIdx_ >= totalRows,"Can't remove invalid row index [%zu]. Total rows [%zu].",rowIdx_, totalRows)
+  size_t cols = columns(); _CHECKRI_
+  try {
+    for (size_t colIdx=0; colIdx < cols; colIdx++) {
+      std::vector<vkp::vkpCSVHandlerData>& colData = data[headers[colIdx]];
+      _ERRI(rowIdx_ >= colData.size(),"Unexpected Row Index %zu >= %zu, at column index %zu",rowIdx_,colData.size(), colIdx)
+      colData.erase(colData.begin()+rowIdx_);
+    }
+  } catch(std::exception& e) { _ERRI(1, "Exception:\n[%s]",e.what()) }
+  return 0;
+}
+
+
+int vkpCSVHandler::removeRows(std::vector<size_t> rowIdxs_) {
+  sort(rowIdxs_.begin(), rowIdxs_.end(), greater<size_t>());
+  for (auto& r : rowIdxs_) {
+    _ERRI(0 != removeRow(r),"Failed to remove row %zu",r)
+  }
+  return 0;
+}
+
+
+int vkpCSVHandler::removeRows(std::vector<int> rowIdxs_) {
+  sort(rowIdxs_.begin(), rowIdxs_.end(), greater<size_t>());
+  for (auto& r : rowIdxs_) {
+    _ERRI(r < 0,"row index %i < 0",r)
+    _ERRI(0 != removeRow((size_t)r),"Failed to remove row %i",r)
+  }
+  return 0;
+}
+
+
+int vkpCSVHandler::clear() {
+  headers.clear();
+  headersTypes.clear();
+  data.clear();
+  loadedFileName = string("");
+  errString = string("");
   return 0;
 }
 
