@@ -25,6 +25,8 @@
 import sys
 
 def vkpConfigRead(filename, flag):
+  if (flag == 1):
+    print ("vkpConfigRead - [%s]:"%(filename))
   try:
     res = {}
     with open(filename,"r") as rfp:
@@ -39,9 +41,17 @@ def vkpConfigRead(filename, flag):
         if (p == -1):
           raise ValueError("Unexpected line without ':' in configuration file.\n * Error at config file LINE -> [%s]"%(l))
         if (flag == 1):
-          print("> [%s]"%(l))
+          print("  > [%s]"%(l))
         res[l[0:p]] = l[p+2:]
   except NameError:
     print("error:",NameError)
-  print(res)
   return res
+
+def vkpConfig_ConvertToFloats(str):
+  return list(map(float,str.split(',')))
+
+def vkpConfig_ConvertToInts(str):
+  return list(map(int,str.split(',')))
+
+def vkpConfig_ConvertToBools(str):
+  return list(map(bool,str.split(',')))

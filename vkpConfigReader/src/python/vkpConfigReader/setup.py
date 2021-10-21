@@ -23,7 +23,7 @@
 from setuptools import setup
 
 setup(name='vkpConfigReader',
-      version='0.001',
+      version='0.216',
       description='Reading configuration text files.',
       url='https://github.com/terablade2001/vkpLibs',
       author='Vasileios Kon. Pothos',
