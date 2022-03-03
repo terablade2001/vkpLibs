@@ -1,6 +1,6 @@
 // MIT License
 
-// Copyright (c) 2017 - 2021 Vasileios Kon. Pothos (terablade2001)
+// Copyright (c) 2017 - 2022 Vasileios Kon. Pothos (terablade2001)
 // https://github.com/terablade2001
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -56,6 +56,20 @@ type(dataType_), i(0), d(0), s() {
   setVal(text_);
 }
 
+vkpCSVHandlerData::vkpCSVHandlerData(const vkpCSVHandlerData& other):
+  type(other.type), i(other.i), d(other.d), s(other.s) {
+}
+
+vkpCSVHandlerData& vkpCSVHandlerData::operator=(const vkpCSVHandlerData& other) {
+  if (this == &other) return *this;
+  type = other.type; i = other.i; d = other.d; s = other.s;
+  return *this;
+}
+
+const vkpCSVHandlerData& vkpCSVHandlerData::operator=(const vkpCSVHandlerData&& other) {
+  *this = other;
+  return *this;
+}
 
 int vkpCSVHandlerData::setVal(std::string str) {
   _ERRI(type==DataType::NONE,"setVal(): DataType is NONE and not provided!")
@@ -171,11 +185,14 @@ int vkpCSVHandler::setHeaders(
   _ERRI(headerStrings_.size() != dataTypes_.size(), "headerStrings_.size() != dataTypes_.size() (%zu != %zu)", headerStrings_.size(),  dataTypes_.size())
   _ERRI(headerStrings_.size() == 0, "headerStrings_.size() == 0")
 
-  _ERRI(0!=setHeaders(dataTypes_),"Failed to set headers data types.")
-  for (size_t i=0; i < headerStrings_.size(); i++) {
-    headers.push_back(headerStrings_[i]);
-    data[headerStrings_[i]] = vector<vkpCSVHandlerData>();
-    data[headerStrings_[i]].clear();
+  std::vector<std::string> hS = headerStrings_;
+  std::vector<unsigned char> dT = dataTypes_;
+
+  _ERRI(0!=setHeaders(dT),"Failed to set headers data types.")
+  for (size_t i=0; i < hS.size(); i++) {
+    headers.push_back(hS[i]);
+    data[hS[i]] = vector<vkpCSVHandlerData>();
+    data[hS[i]].clear();
     _CHECKRI_
   }
   return 0;
@@ -213,11 +230,16 @@ int vkpCSVHandler::loadFile(std::string fileName_, bool ignoreHeaders_) {
     size_t countLines = 0;
     while(!infile.eof()) {
       std::getline(infile, readLine);
+      if (readLine.size() == 0) continue;
+      _ERRINF(1,"readLine: -=>[%s]<=-",readLine.c_str())
       if (ignoreHeaders_ == true) {
         _ERRO(headers.size()==0, { infile.close(); return -1; },"loadFile(): ignoring headers of CSV file without having use setHeaders() is not allowed.")
+        _CERRO({ infile.close(); return -1; },"Error Captured")
         ignoreHeaders_ = false; continue;
       } // skip 1rst line
       _ERRO(0!=parseStringLine(readLine), { infile.close(); return -1; }, "Failed to parse string line: [%s]", readLine.c_str())
+      _CERRO({ infile.close(); return -1; },"Error Captured")
+      _ECSCLS(1)
       countLines++;
     }
     _ERRI(countLines == 0,"At least 1 row - Headers - is required in the CSV file.")
@@ -230,6 +252,13 @@ int vkpCSVHandler::loadFile(std::string fileName_, bool ignoreHeaders_) {
 }
 
 int vkpCSVHandler::parseStringLine(std::string str_) {
+  // str_ is the processing string, which is processed thus it's data to be
+  // added to cell strings, till no data left.
+
+  // If we have more an empty string, and not 1 header size, then it's
+  // probably an empty line, i.e. in the end of CSV, and should be ignored.
+  if ((str_.length() == 0) && (headers.size() != 1)) return 0;
+
   size_t fieldDelimiterSize = fieldDelimiter.length();
   size_t fieldPos;
   size_t stringPosStart;
@@ -240,45 +269,108 @@ int vkpCSVHandler::parseStringLine(std::string str_) {
   vector<string> vHeaders;
   vector<unsigned char> vTypes;
   const bool autoGenerateStringHeaders = (headers.size() == 0) ? true : false;
+  _ERRINF(1,"Parsing Line: [%s]", str_.c_str())
+
+  // If the processing string ends with a delimiter then add again the delimiter
+  // thus to put empty cellstring for the last column.
+  stringPosEnd = str_.rfind(fieldDelimiter);
+  if (stringPosEnd == (str_.length()-1)) { str_ += fieldDelimiter; }
 
   while(!str_.empty()) {
+    // Search for a string delimiter position.
     stringPosStart = str_.find(stringDelimiter);
-    if (stringPosStart!=string::npos) {
-      if (stringPosStart == 0) {
-        str_ = str_.substr(1);
+
+    // If there is a character (!="") delimiter for strings at the first
+    // position of the remaining processing string, then we have a string value
+    // inside two placements of the character position that must be identified.
+    if ((stringPosStart==0) && (0!=stringDelimiter.compare(""))) {
+
+      // closeStringPattern: If we start with '"' for instance, the cell string
+      // value is expected to close with the '",' pattern.
+      string closeStringPattern = stringDelimiter+fieldDelimiter;
+
+      // Remove the string delimiter at 0 position from the processing string.
+      str_ = str_.substr(1);
+
+      // The following code is used to handle cases where there is a pattern
+      // of i.e. '"",' which denotes that the '",' subpattern is not a CSV
+      // closure. For instance, imagine the processing string:
+      // "[{""text"":""This is a text\n"",""by"":""me@me.gr""}]",data
+      // There are two field delimiters ',' but only the second is an actual,
+      // field delimiter, while the first is not! The first one is 'fake'.
+      size_t subpos = 0;
+      do {
+        // Search for the closing pattern, i.e. '",'.
+        stringPosEnd = str_.find(closeStringPattern, subpos);
+        // If that pattern doesn't exist, or is at the first position, then
+        // there is no case to find a 'fake' field delimiter. Thus break.
+        if ((stringPosEnd==string::npos) || (stringPosEnd==0)) break;
+        // In any other case check if the detected pattern '",' is a pattern
+        // that should be ignored like '"",' in the specific position where the
+        // '",' pattern has been found.
+        auto notPosEnd = str_.find(stringDelimiter+closeStringPattern, stringPosEnd-1);
+        // If no such pattern exist, or exist at different position then there
+        // is no interference with the current cell string.
+        if ((notPosEnd==string::npos) || (notPosEnd != stringPosEnd-1)) break;
+        // In any other case, ignore it and repeat the search loop for the
+        // closeStringPattern '",' after the detected one '"",'.
+        subpos = stringPosEnd+2;
+      } while (1);
+
+      // In case we haven't find a '",' pattern, then check for a '"' pattern
+      // without the field delimiter (i.e, the final cell string in the row).
+      // patternSize is 2 ofr '",' pattern or 1 for '"' pattern.
+      int patternSize = closeStringPattern.length();
+      if (stringPosEnd==string::npos) {
         stringPosEnd = str_.find(stringDelimiter);
-        _ERRI(stringPosEnd==string::npos,"Failed to detect ending position of string delimiter([%s])",stringDelimiter.c_str())
-
-        cellString = str_.substr(0,stringPosEnd);
-        if (autoGenerateStringHeaders) {
-          vHeaders.push_back(cellString);
-        } else {
-          _ERRI(0!=addStringToColumn(cellString, column++),"Failed to add [%s] at row[%zu].",cellString.c_str(), column)
-        }
-
-        str_ = str_.substr(stringPosEnd+1);
-        if (!str_.empty()) {
-          fieldPos = str_.find(fieldDelimiter);
-          if (fieldPos!=string::npos) {
-            _ERRI(fieldPos!=0,"Unexpected starting position of fieldPos delimiter([%s])",fieldDelimiter.c_str())
-            str_ = str_.substr(fieldDelimiterSize);
-          }
-        }
-        continue;
+        patternSize = stringDelimiter.length();
       }
+      _ERRI(stringPosEnd==string::npos,"Failed to detect ending position of string delimiter [%s]",stringDelimiter.c_str())
+
+      _ERRINF(1,"Cell SubString: [%s] - column: %zu",str_.c_str(), column)
+      // Now get the cell string and store it.
+      cellString = str_.substr(0,stringPosEnd);
+      // dbg_(63,"("<<column<<"): cellString: ###"<<cellString<<"###")
+      if (autoGenerateStringHeaders) {
+        vHeaders.push_back(cellString);
+      } else {
+        _ERRI(0!=addStringToColumn(cellString, column++),"Failed to add [%s] at row[%zu].",cellString.c_str(), column)
+      }
+      _ECSCLS(1)
+
+      // Remove the used data from the processing string, and repeat.
+      str_ = str_.substr(stringPosEnd+patternSize);
     }
 
-    fieldPos = str_.find(fieldDelimiter);
-    if (fieldPos!=string::npos) {
-      cellString.clear();
-      if (fieldPos > 0) { cellString = str_.substr(0,fieldPos); }
-      str_ = str_.substr(fieldPos+fieldDelimiterSize);
-    } else { cellString = str_; str_.clear(); }
+    else
 
-    if (autoGenerateStringHeaders) {
-      vHeaders.push_back(cellString);
-    } else {
-      _ERRI(0!=addStringToColumn(cellString, column++),"Failed to add [%s] at row[%zu].",cellString.c_str(), column)
+    // We don't have a string delimiter at first position of the remaining
+    // processing string. So search for field delimiter position (i.e. ',').
+    {
+      fieldPos = str_.find(fieldDelimiter);
+      // If field delimiter exist, then capture the cell string value (or
+      // leave it blank if there is two delimiters consecutive like ',,')
+      // and reduce processing string to the next search position.
+      if (fieldPos!=string::npos) {
+        cellString.clear();
+        if (fieldPos > 0) { cellString = str_.substr(0,fieldPos); }
+        str_ = str_.substr(fieldPos+fieldDelimiterSize);
+      }
+      else
+      // If the field delimiter doesn't exist, keep the all the rest processing
+      // string as a cell string value, and clear the processing string.
+      {
+        cellString = str_; str_.clear();
+      }
+
+      _ERRINF(1,"Cell SubString: [%s] - column: %zu",str_.c_str(), column)
+      // dbg_(63,"("<<column<<"): cellString: #-#"<<cellString<<"#-#")
+      if (autoGenerateStringHeaders) {
+        vHeaders.push_back(cellString);
+      } else {
+        _ERRI(0!=addStringToColumn(cellString, column++),"Failed to add [%s] at row[%zu].",cellString.c_str(), column)
+      }
+      _ECSCLS(1)
     }
   }
 
@@ -291,6 +383,8 @@ int vkpCSVHandler::parseStringLine(std::string str_) {
       _ERRI(0!=setHeaders(vHeaders, headersTypes),"Failed to autoset headers.")
     }
   }
+
+  _ECSCLS(1)
   return 0;
 }
 
@@ -356,6 +450,7 @@ int vkpCSVHandler::vkpCSVHandler::addStringToColumn(std::string val_, const char
   _ERRI(0!=getColumnByHeaderName(headerName.c_str(), col),"Failed to get column of header [%s]",headerName_);
   try {
     data[headerName].emplace_back(val_, vkpCSVHandlerData::convertIdToDataType(headersTypes[col]));
+    _CERRI("convertIdToDataType(%i) failed ",headersTypes[col])
   } catch (std::exception& e) {
     _ERRI(1,"Exception during adding [%lli] to [%s]:\n[%s]",val_,headerName.c_str(), e.what())
   }
@@ -375,6 +470,7 @@ int vkpCSVHandler::vkpCSVHandler::convertStringAddToColumn(std::string val_, con
   _ERRI(0!=getColumnByHeaderName(headerName.c_str(), col),"Failed to get column of header [%s]",headerName_);
   try {
     data[headerName].emplace_back(val_, vkpCSVHandlerData::convertIdToDataType(headersTypes[col]));
+    _CERRI("convertIdToDataType(%i) failed ",headersTypes[col])
   } catch (std::exception& e) {
     _ERRI(1,"Exception during adding [%lli] to [%s]:\n[%s]",val_,headerName.c_str(), e.what())
   }
@@ -573,17 +669,20 @@ int vkpCSVHandler::getPtrColumn(size_t column_, std::vector<void*>& out_, unsign
   return 0;
 }
 
-int vkpCSVHandler::getCSVHandlerData(const char* headerName_, std::vector<vkpCSVHandlerData>& out_, unsigned char& type_) {
-  _ERRI(0!=checkIfHeaderExist(headerName_),"Header check failed")
-  size_t col_;
-  _ERRI(0!=getColumnByHeaderName(headerName_, col_),"Failed to get column by header name")
-  type_ = headersTypes[col_];
-  out_ = data[string(headerName_)];
+int vkpCSVHandler::getCSVHandlerDataCopy(const char* headerName_, std::vector<vkpCSVHandlerData>& out_, unsigned char& type_) {
+  _ERRI(0==headersTypes.size(),"0==headersTypes.size()")
+  try {
+    _ERRI(0!=checkIfHeaderExist(headerName_),"Header check failed")
+    size_t col_;
+    _ERRI(0!=getColumnByHeaderName(headerName_, col_),"Failed to get column by header name")
+    type_ = headersTypes[col_];
+    out_ = data[string(headerName_)];
+  } catch (std::exception&e) { _ERRI(1,"Exception:\n[%s]",e.what()) }
   return 0;
 }
-int vkpCSVHandler::getCSVHandlerData(size_t column_, std::vector<vkpCSVHandlerData>& out_, unsigned char& type_) {
+int vkpCSVHandler::getCSVHandlerDataCopy(size_t column_, std::vector<vkpCSVHandlerData>& out_, unsigned char& type_) {
   _ERRI(column_ >= columns(),"Requested column[=%zu] >= data columns [=%zu]",column_, columns());
-  _ERRI(0!=getCSVHandlerData(headers[column_].c_str(), out_, type_),"Failed to get CSVHanderData for column [%zu]",column_)
+  _ERRI(0!=getCSVHandlerDataCopy(headers[column_].c_str(), out_, type_),"Failed to get CSVHanderData for column [%zu]",column_)
   return 0;
 }
 
@@ -759,8 +858,9 @@ int vkpCSVHandler::appendFile(std::string fileName_) {
 }
 
 int vkpCSVHandler::copyHeadersFrom(vkpCSVHandler& src_) {
+  _ERRI(0==src_.headers.size(),"copyHeadersFrom(): source headers are empty")
+  _ERRI(0==src_.headersTypes.size(),"copyHeadersFrom(): source headersTypes are empty")
   clear(); _CHECKRI_
-
   for (auto& header : src_.headers) {
     headers.push_back(header);
   }
@@ -772,6 +872,8 @@ int vkpCSVHandler::copyHeadersFrom(vkpCSVHandler& src_) {
 
 int vkpCSVHandler::createFrom(vkpCSVHandler& src_, size_t rowStartIdx_, size_t rowEndIdx_) {
   _ERRI(rowStartIdx_ > rowEndIdx_, "rowStartIdx_ [%zu] > rowEndIdx_ [%zu]", rowStartIdx_, rowEndIdx_)
+  _ERRI(0==src_.headers.size(),"copyHeadersFrom(): source headers are empty")
+  _ERRI(0==src_.headersTypes.size(),"copyHeadersFrom(): source headersTypes are empty")
   _ERRI(0!=copyHeadersFrom(src_),"Failed to copy headers")
 
   size_t cols = src_.columns(); _CHECKRI_
@@ -784,7 +886,10 @@ int vkpCSVHandler::createFrom(vkpCSVHandler& src_, size_t rowStartIdx_, size_t r
     for (size_t colIdx=0; colIdx < cols; colIdx++) {
       std::vector<vkp::vkpCSVHandlerData>& dst = data[headers[colIdx]];
       std::vector<vkp::vkpCSVHandlerData>& src = src_.data[headers[colIdx]];
-      dst = std::vector<vkp::vkpCSVHandlerData>(std::next(src.begin(),rowStartIdx_),std::next(src.begin(),rowEndIdx_));
+      for (size_t idxx = rowStartIdx_; idxx < rowEndIdx_; idxx++ ){
+        dst.push_back(src[idxx]);
+      }
+      // dst = std::vector<vkp::vkpCSVHandlerData>(std::next(src.begin(),rowStartIdx_),std::next(src.begin(),rowEndIdx_));
     }
   } catch(std::exception& e) { _ERRI(1, "Exception:\n[%s]",e.what()) }
 

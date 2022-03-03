@@ -1,6 +1,6 @@
 // MIT License
 
-// Copyright (c) 2017 - 2021 Vasileios Kon. Pothos (terablade2001)
+// Copyright (c) 2017 - 2022 Vasileios Kon. Pothos (terablade2001)
 // https://github.com/terablade2001
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -55,6 +55,9 @@ public:
   double d;
   std::string s;
   vkpCSVHandlerData();
+  vkpCSVHandlerData(const vkpCSVHandlerData& other);
+  vkpCSVHandlerData& operator=(const vkpCSVHandlerData& other);
+  const vkpCSVHandlerData& operator=(const vkpCSVHandlerData&& other);
   vkpCSVHandlerData(long long i_);
   vkpCSVHandlerData(double d_);
   vkpCSVHandlerData(std::string s_);
@@ -112,8 +115,8 @@ public:
   int getPtrColumn(const char* headerName_, std::vector<void*>& out_, unsigned char& type_);
   int getPtrColumn(size_t column_, std::vector<void*>& out_, unsigned char& type_);
 
-  int getCSVHandlerData(const char* headerName_, std::vector<vkpCSVHandlerData>& out_, unsigned char& type_);
-  int getCSVHandlerData(size_t column_, std::vector<vkpCSVHandlerData>& out_, unsigned char& type_);
+  int getCSVHandlerDataCopy(const char* headerName_, std::vector<vkpCSVHandlerData>& out_, unsigned char& type_);
+  int getCSVHandlerDataCopy(size_t column_, std::vector<vkpCSVHandlerData>& out_, unsigned char& type_);
 
   int addNewHeader(const char* headerName_, unsigned char type_);
   int setIntColumn(const char* headerName_, std::vector<long long>& inp_);
