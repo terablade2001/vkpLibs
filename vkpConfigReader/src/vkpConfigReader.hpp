@@ -68,6 +68,7 @@ class _baseDataLoader {
   public:
   virtual int loadDataSection(cfg_type& cfgData) = 0;
   virtual std::vector<std::string>& getCheckParamList() = 0;
+  virtual ~_baseDataLoader() {};
 
   int loadConfigFile(std::string file);
   int loadConfigFile(char* file);
