@@ -1,6 +1,6 @@
 // MIT License
 
-// Copyright (c) 2017 - 2021 Vasileios Kon. Pothos (terablade2001)
+// Copyright (c) 2017 - 2022 Vasileios Kon. Pothos (terablade2001)
 // https://github.com/terablade2001/vkpConfigReader
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -27,15 +27,24 @@
 #include <cstring>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <algorithm>
 #include <vector>
-
 #ifdef _MSC_VER
   #include <string>
 #endif
 
-#define vkpConfigReaderLOADPARAM(x) \
-  _ERRI(0!=cfg_GetParam(cfgData, #x, x),"Failed to process parameters ["#x"]")
+#ifdef __ECSOBJ__
+#include <CECS.hpp>
+#endif
+
+#ifdef __ECSOBJ__
+  #define vkpConfigReaderLOADPARAM(x) \
+    _ERRI(0!=cfg_GetParam(cfgData, #x, x),"Failed to process parameters ["#x"]")
+#else
+  #define vkpConfigReaderLOADPARAM(x) \
+    if (0!=cfg_GetParam(cfgData, #x, x)) { std::cout << "Failed to process parameters ["#x"]" << std::endl; return -1; }
+#endif
 
 namespace vkpConfigReader {
 
@@ -44,6 +53,7 @@ typedef std::vector<std::pair<std::string,std::string>> cfg_type;
 std::string cfg_apiVersion();
 
 int cfg_LoadFile(const char* cfgfile, cfg_type& cfg_data);
+int cfg_readCommand(std::string& command_, cfg_type& cfg_data);
 
 int cfg_ValueConvert(std::string& string_value, std::string& value);
 
@@ -60,12 +70,14 @@ int cfg_GetParam(cfg_type& cfg_data, const char* param, std::vector<T>& value);
 int cfg_CheckParams(
   cfg_type& cfg_data,
   std::vector<std::string>& checklist,
-  std::string& missing_params
+  std::string& missing_params,
+  bool isCLI=false
 );
 
-#ifdef __ECSOBJ__
+// #ifdef __ECSOBJ__
 class _baseDataLoader {
   public:
+  std::vector<std::string> _argv;
   virtual int loadDataSection(cfg_type& cfgData) = 0;
   virtual std::vector<std::string>& getCheckParamList() = 0;
   virtual ~_baseDataLoader() {};
@@ -73,14 +85,18 @@ class _baseDataLoader {
   int loadConfigFile(std::string file);
   int loadConfigFile(char* file);
   int loadConfigFile(const char* file);
+  int readCommandLine(std::string cmdLine);
+  int readCommandLine(char* cmdLine);
+  int readCommandLine(const char* cmdLine);
+  int readCommandLine(int argc, char** argv);
 };
-#endif
+// #endif
 
 
 // ------------------------ Implementation -------------------------------------
 template <typename T>
 int inline cfg_ValueConvert(std::string& string_value, T& value) {
-   if (std::is_same<T, int>::value)
+  if (std::is_same<T, int>::value)
     value = std::stoi(string_value);
   else if (std::is_same<T, float>::value)
     value = std::stof(string_value);
@@ -121,29 +137,29 @@ int inline cfg_ValueConvert(std::string&& string_value, T& value) {
 template <typename T>
 int inline cfg_GetParam(cfg_type& cfg_data, const char* param, T& value) {
   if (param == nullptr) {
-    std::cout << "cfg_GetParam():: Error: 2nd argument == NULL. Aborting." <<
-    std::endl;
+    std::cout << "cfg_GetCLIParam():: Error: 2nd argument == NULL. Aborting." << std::endl;
     return -1;
   }
+
   auto it = std::find_if(cfg_data.begin(), cfg_data.end(),
       [param](const std::pair<std::string, std::string>& el) {
         return el.first == param;
       }
     );
 
-  if (it == cfg_data.end()) {
-    std::cout << "cfg_GetParam():: Error: [" << param << "] not found!" <<
-    std::endl;
-    return -1;
-  }
+  // dbg_(63,"param: "<<param<<", cfg_data.size(): "<<cfg_data.size())
 
+  // If the parameter is not found on the list, instead of error, ignore it (use it's default value).
+  if (it == cfg_data.end()) return 0;
+
+  // dbg_(63,"* ["<<(*it).first<<"]:("<<(*it).second<<")")
   if (0!=cfg_ValueConvert((*it).second, value)) {
     std::cout << "cfg_GetParam():: Error: Failed to convert string ["<<(*it).second<<"] to proper value." << std::endl;
     return -1;
   }
+
   return 0;
 }
-
 
 template<typename T>
 int inline cfg_convertToVector(std::string& string_value, std::vector<T>& output) {
@@ -180,8 +196,7 @@ int inline cfg_convertToVector(std::string& string_value, std::vector<T>& output
 template <typename T>
 int inline cfg_GetParam(cfg_type& cfg_data, const char* param, std::vector<T>& value) {
   if (param == nullptr) {
-    std::cout << "cfg_GetParam():: Error: 2nd argument == NULL. Aborting." <<
-    std::endl;
+    std::cout << "cfg_GetParam():: Error: 2nd argument == NULL. Aborting." << std::endl;
     return -1;
   }
   auto it = std::find_if(cfg_data.begin(), cfg_data.end(),
@@ -191,9 +206,8 @@ int inline cfg_GetParam(cfg_type& cfg_data, const char* param, std::vector<T>& v
     );
 
   if (it == cfg_data.end()) {
-    std::cout << "cfg_GetParam():: Error: [" << param << "] not found!" <<
-    std::endl;
-    return -1;
+    // std::cout << "cfg_GetParam():: Error: [" << param << "] not found!" << std::endl;
+    return 0;
   }
 
 

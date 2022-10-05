@@ -21,6 +21,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+// Test with:
+// cd test
+// g++ main.cpp ../src/vkpConfigReader.cpp -o main
+// ./main -testId 0 argv_1 -configFile DefaultConfig.cfg argv_2 --cli
+
 #include <cstdio>
 #include <cstring>
 #include <iostream>
@@ -31,68 +36,93 @@
 
 using namespace vkpConfigReader;
 
+// Create your custom CLI parser using vkpConfigReader from
+// vp-cpp-template → https://github.com/terablade2001/vp-cpp-template
+class CMainCLIReader : public vkpConfigReader::_baseDataLoader {
+  public:
+  bool cli; // CLI: Argument '--cli' will set this to 'true'.
+  int testId;
+  std::string infoText;
+  std::string configFile;
+  CMainCLIReader() {
+    cli=false; // cli must be 'false' by default.
+    // Default text of infoText if no CLI of type: '-infoText <text>' is used.
+    infoText = std::string("Default Text!");
+  }
+  std::vector<std::string>& getCheckParamList() {
+    // CLI must contain a directive of: '-testId <value>'
+    static std::vector<std::string> CheckParamList = { "testId", "configFile" };
+    return CheckParamList;
+  }
+  int loadDataSection(cfg_type& cfgData) {
+    vkpConfigReaderLOADPARAM(cli)
+    vkpConfigReaderLOADPARAM(testId)
+    vkpConfigReaderLOADPARAM(infoText)
+    vkpConfigReaderLOADPARAM(configFile)
+    return 0;
+  }
+};
+
+// Create your custom config-file reader using vkpConfigReader from
+// vp-cpp-template → https://github.com/terablade2001/vp-cpp-template
+class CMainConfigReader : public vkpConfigReader::_baseDataLoader {
+  public:
+  int Mode;
+  std::string FileA;
+  std::string FileB;
+  float Rate;
+  std::vector<int> Ints;
+  std::vector<float> Floats;
+  std::vector<std::string> Strings;
+  std::vector<std::string>& getCheckParamList() {
+    static std::vector<std::string> CheckParamList = {
+      "Mode","FileA","FileB","Rate","Ints","Floats","Strings"
+    };
+    return CheckParamList;
+  }
+  int loadDataSection(cfg_type& cfgData) {
+    vkpConfigReaderLOADPARAM(Mode)
+    vkpConfigReaderLOADPARAM(FileA)
+    vkpConfigReaderLOADPARAM(FileB)
+    vkpConfigReaderLOADPARAM(Rate)
+    vkpConfigReaderLOADPARAM(Ints)
+    vkpConfigReaderLOADPARAM(Floats)
+    vkpConfigReaderLOADPARAM(Strings)
+    return 0;
+  }
+};
+
+
 int main(int argc, char **argv) {
+  int r;
   std::cout << "Using vkpConfigReader version "<< cfg_apiVersion() << std::endl;
 
-  cfg_type cfg_data;
-  int r = cfg_LoadFile("DefaultConfig.cfg", cfg_data);
-  if (r != 0) return -1;
-
-  std::vector<std::string> CheckParamList = {
-    "Version", "Mode", "FileA", "FileB", "Speed", "Rate"
-  };
-  std::string NotExistingParams;
-
-  r = cfg_CheckParams(cfg_data, CheckParamList, NotExistingParams);
-  if (r != 0) {
-    std::cout << "The following parameters were not found: \n" <<
-            "[" << NotExistingParams << "]\n" << std::endl;
-  }
-
-  int Mode = -1;
-  float Rate = 0.0f;
-  std::string FilenameA;
-  std::string FilenameB;
-
-  cfg_GetParam(cfg_data, "Mode", Mode);
-  cfg_GetParam(cfg_data, "FileA", FilenameA);
-  cfg_GetParam(cfg_data, "FileB", FilenameB);
-  cfg_GetParam(cfg_data, "Rate", Rate);
-
-  std::cout << "Mode = [" << Mode << "]" << "|"<< std::endl;
-  std::cout << "FileA = [" << FilenameA << "]" << "|"<< std::endl;
-  std::cout << "FileB = [" << FilenameB << "]" << "|"<< std::endl;
-  std::cout << "Rate = [" << Rate << "]" << "|"<< std::endl;
-
-  // -- Directly loadign Vectors from strings seperated with ',' ---------------
-  std::vector<int> vInts;
-  std::vector<float> vFloats;
-  std::vector<std::string> vStrings;
-  cfg_GetParam(cfg_data, "Ints", vInts);
-  cfg_GetParam(cfg_data, "Floats", vFloats);
-  cfg_GetParam(cfg_data, "Strings", vStrings);
-  std::cout << "Ints: "; for (auto& i : vInts) { std::cout <<"["<< i <<"] "; } std::cout << "|"<< std::endl;
-  std::cout << "Floats: "; for (auto& i : vFloats) { std::cout <<"["<< i <<"] "; } std::cout << "|"<< std::endl;
-  std::cout << "Strings: "; for (auto& i : vStrings) { std::cout <<"["<< i <<"] "; } std::cout << "|"<< std::endl;
-  // ---------------------------------------------------------------------------
-
-  // -- Using cfg_convertToVector() on strings seperated with ',' --------------
-  // std::string Ints,Floats,Strings;
-  // cfg_GetParam(cfg_data, "Ints", Ints);
-  // cfg_GetParam(cfg_data, "Floats", Floats);
-  // cfg_GetParam(cfg_data, "Strings", Strings);
-  // std::cout << "Ints = [" << Ints << "]" << "|"<< std::endl;
-  // std::cout << "Floats = [" << Floats << "]" << "|"<< std::endl;
-  // std::cout << "Strings = [" << Strings << "]" << "|"<< std::endl;
-
-  // std::vector<int> vInts;
-  // std::vector<float> vFloats;
-  // std::vector<std::string> vStrings;
-  // cfg_convertToVector(Ints,vInts);
-  // cfg_convertToVector(Floats,vFloats);
-  // cfg_convertToVector(Strings,vStrings);
-  // ---------------------------------------------------------------------------
-
+  std::cout<< "------------ CLI Reader ------------" << std::endl;
+  CMainCLIReader CLIData;
+  r = CLIData.readCommandLine(argc,argv);
+  if (r!=0) { std::cout << "Failed to read CLI input" << std::endl; return -1; }
+  // Display the parser's custom variables as acquired from the CLI input.
+  std::cout << "cli: " << CLIData.cli << std::endl;
+  std::cout << "testId: " << CLIData.testId << std::endl;
+  std::cout << "infoText: " << CLIData.infoText << std::endl;
+  std::cout << "configFile: " << CLIData.configFile << std::endl;
+  // Display the rest user arguments as captured from the CLI input.
+  int i=0; for (const auto& argv : CLIData._argv)
+    std::cout << " - argument["<<(i++)<<"]: " << argv << std::endl;
+  std::cout<< "------------------------------------" << std::endl;
+  
+  std::cout<< "------------ Config File Reader ------------" << std::endl;
+  CMainConfigReader ConfData;
+  r = ConfData.loadConfigFile(CLIData.configFile);
+  if (r!=0) { std::cout << "Failed to load config file." << std::endl; return -1; }   
+  std::cout << "Mode = [" << ConfData.Mode << "]" << std::endl;
+  std::cout << "FileA = [" << ConfData.FileA << "]" << std::endl;
+  std::cout << "FileB = [" << ConfData.FileB << "]" << std::endl;
+  std::cout << "Rate = [" << ConfData.Rate << "]" << std::endl;
+  std::cout << "Ints: "; for (auto& i : ConfData.Ints) { std::cout <<"["<< i <<"] "; } std::cout << std::endl;
+  std::cout << "Floats: "; for (auto& i : ConfData.Floats) { std::cout <<"["<< i <<"] "; } std::cout << std::endl;
+  std::cout << "Strings: "; for (auto& i : ConfData.Strings) { std::cout <<"["<< i <<"] "; } std::cout << std::endl;
+  std::cout<< "--------------------------------------------" << std::endl;
   std::cout << std::endl;
 
   return 0;
