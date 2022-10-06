@@ -368,6 +368,11 @@ int _baseDataLoader::readCommandLine(std::string cmdLine) {
     } else if (CLAType == "--") {
       cfgData.emplace_back(CLAName,"true");
     } else if (CLAType == "-") {
+      try {
+        std::stoull(CLAName); // If this doesn't throw exception, it's a negative number.
+        _argv.push_back(string("-")+CLAName); continue; // Add it as argument and continue;
+      } catch (std::exception& e) { /* do nothing - let the code continue */ }
+
       // dbg_(63,"["<<CLAName<<"], i: "<<i<<", cfgDataCLAs.size(): "<<cfgDataCLAs.size())
       #ifdef __ECSOBJ__
         _ERRI((((size_t)i)+1) >= cfgDataCLAs.size(),"CLA directive [-%s] is at the end of command line (has no following up value)!",CLAName.c_str())
@@ -379,18 +384,11 @@ int _baseDataLoader::readCommandLine(std::string cmdLine) {
       #endif
       const auto& CLA2 = cfgDataCLAs[++i];
       const auto& CLA2Type = CLA2.first;
-      const auto& CLA2Name = CLA2.second;
-      #ifdef __ECSOBJ__
-        _ERRI(CLA2Type.length()!=0,"CLA directive [-%s] followed by other tag-name: [%s%s]!",CLAName.c_str(),CLA2Type.c_str(),CLA2Name.c_str())
-      #else
-        if (CLA2Type.length()!=0) {
-          std::cout << "CLA directive [-"<<CLAName<<"] followed by other tag-name: ["<<CLA2Type<<CLA2Name<<"]!" << std::endl;
-          return -1;
-        }
-      #endif
-      if (CLA2Type.length()==0) {
-        cfgData.emplace_back(CLAName,CLA2Name);
+      auto CLA2Name = CLA2.second;
+      if (CLA2Type.length()!=0) { // If the next CLA is "-" or "--", then it's negative number/user string: Not directive/bool.
+        CLA2Name = CLA2Type + CLA2Name;
       }
+      cfgData.emplace_back(CLAName,CLA2Name);
     }
   }
 

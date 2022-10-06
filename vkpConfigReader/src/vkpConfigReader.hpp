@@ -96,34 +96,39 @@ class _baseDataLoader {
 // ------------------------ Implementation -------------------------------------
 template <typename T>
 int inline cfg_ValueConvert(std::string& string_value, T& value) {
-  if (std::is_same<T, int>::value)
-    value = std::stoi(string_value);
-  else if (std::is_same<T, float>::value)
-    value = std::stof(string_value);
-  else if (std::is_same<T, double>::value)
-    value = std::stod(string_value);
-  else if (std::is_same<T, long int>::value)
-    value = std::stol(string_value);
-  else if (std::is_same<T, long double>::value)
-    value = std::stold(string_value);
-  else if (std::is_same<T, long long>::value)
-    value = std::stoll(string_value);
-  else if (std::is_same<T, unsigned long>::value)
-    value = std::stoul(string_value);
-  else if (std::is_same<T, unsigned long long>::value)
-    value = std::stoull(string_value);
-  else if (std::is_same<T, bool>::value) {
-    try {
-      value = (bool)std::stoi(string_value);
-    } catch(std::exception &e) {
-      if ((string_value.compare("true") == 0) ||
-          (string_value.compare("TRUE") == 0) ||
-          (string_value.compare("True") == 0)
-      ) value = true;
-      else value = false;
+  try {
+    if (std::is_same<T, int>::value)
+      value = std::stoi(string_value);
+    else if (std::is_same<T, float>::value)
+      value = std::stof(string_value);
+    else if (std::is_same<T, double>::value)
+      value = std::stod(string_value);
+    else if (std::is_same<T, long int>::value)
+      value = std::stol(string_value);
+    else if (std::is_same<T, long double>::value)
+      value = std::stold(string_value);
+    else if (std::is_same<T, long long>::value)
+      value = std::stoll(string_value);
+    else if (std::is_same<T, unsigned long>::value)
+      value = std::stoul(string_value);
+    else if (std::is_same<T, unsigned long long>::value)
+      value = std::stoull(string_value);
+    else if (std::is_same<T, bool>::value) {
+      try {
+        value = (bool)std::stoi(string_value);
+      } catch(std::exception &e) {
+        if ((string_value.compare("true") == 0) ||
+            (string_value.compare("TRUE") == 0) ||
+            (string_value.compare("True") == 0)
+        ) value = true;
+        else value = false;
+      }
+    } else {
+      std::cout << "cfg_ValueConvert(): Not defined type!" << std::endl;
+      return -1;
     }
-  } else {
-    std::cout << "cfg_ValueConvert(): Not defined type!" << std::endl;
+  } catch (std::exception& e) {
+    std::cout << "cfg_ValueConvert(): Failed to convert value ["<<string_value<<"] to predefined type!" << std::endl;
     return -1;
   }
   return 0;
@@ -137,7 +142,7 @@ int inline cfg_ValueConvert(std::string&& string_value, T& value) {
 template <typename T>
 int inline cfg_GetParam(cfg_type& cfg_data, const char* param, T& value) {
   if (param == nullptr) {
-    std::cout << "cfg_GetCLIParam():: Error: 2nd argument == NULL. Aborting." << std::endl;
+    std::cout << "cfg_GetParam():: Error: 2nd argument == NULL. Aborting." << std::endl;
     return -1;
   }
 

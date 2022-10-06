@@ -10,3 +10,11 @@ A library of small code utilities.
 * **vkpOpmlCpp** [C++]: Export data as strings to MindMap's opml format.
 * **vkpCSVHandler** [C++]: Load, handle and store CSV files in C++.
 
+# Versioning
+
+## version (0.220)
+### - vkpConfigReader updates
+- [x] If it detects two consecutive directives (`-`) then it doesn't produce error. Instead takes the second directive as the value for the first. Example: `-i -3` means `i = -3`.
+- [x] Negative numbers are not count for directives. Example `./main -2` now gives `argv[0] = ./main` and `argv[1] = -2`.
+- [x] cfg_ValueConvert() prints a message if exception during conversion is captured.
+
