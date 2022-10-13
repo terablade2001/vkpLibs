@@ -1,6 +1,6 @@
 // MIT License
 
-// Copyright (c) 2017 - 2020 Vasileios Kon. Pothos (terablade2001)
+// Copyright (c) 2017 - 2022 Vasileios Kon. Pothos (terablade2001)
 // https://github.com/terablade2001
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -87,6 +87,7 @@ void vkpTimer::reset() {
   count = 0;
   calculate = false;
   enabled = true;
+  totalTime = 0;
   log.clear();
 }
 

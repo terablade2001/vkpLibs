@@ -12,6 +12,8 @@ A library of small code utilities.
 
 # Versioning
 
+## version (0.221)
+- [x] vkpTimer::reset() also set totalTime to 0.
 ## version (0.220)
 ### - vkpConfigReader updates
 - [x] If it detects two consecutive directives (`-`) then it doesn't produce error. Instead takes the second directive as the value for the first. Example: `-i -3` means `i = -3`.
