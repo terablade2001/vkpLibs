@@ -1,6 +1,6 @@
 // MIT License
 
-// Copyright (c) 2017 - 2020 Vasileios Kon. Pothos (terablade2001)
+// Copyright (c) 2017 - 2023 Vasileios Kon. Pothos (terablade2001)
 // https://github.com/terablade2001
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -74,7 +74,7 @@ int vkpProgressBar::Start() {
     printf("%s%s",Open,Arrow);
     for (int i = 0; i < Spaces-1; i++) printf(" ");
     printf("%s",Close);
-    fflush(stdout);
+    std::fflush(stdout);
   }
   return 0;
 }
@@ -83,30 +83,32 @@ int vkpProgressBar::Update(float iter_value) {
   if (!printEnabled) return 0;
   if (curr_space == Spaces) return 0;
   if (iter_value < Min) iter_value = Min;
-  else if (iter_value > Max) iter_value = Max-1;
+  else if (iter_value >= Max) iter_value = Max-1;
 
-
-  const float Diff = Max-Min;
+  const float Diff = Max-Min-1;
   const float ratio = (iter_value-Min) / Diff;
-  int target_space = floor(ratio*Spaces)+1;
+  // How many chars out of Max must be filled out (i.e. 1 to 50)
+  int target_space = min(((int)floor(ratio*Spaces))+1,Spaces);
   // cout <<target_space<<", "<<curr_space<<endl;
   if (target_space == curr_space) return 0;
   else if (target_space > curr_space) {
-    // cout <<target_space<<", "<<curr_space<<", "<<Spaces+2-curr_space<<endl;
-    if (target_space > Spaces) target_space = Spaces;
+    // cout <<"curr_space: "<<curr_space<<", target_space: "<<target_space<<", backSpaces:"<<Spaces+2-curr_space<<endl;
 
-    char bstr[514]={0};
-    const int maxi = (Spaces+2-curr_space > 500)?500:Spaces+2-curr_space;
-    for (int i = 0; i < maxi; i++) bstr[i]='\b';
+    char bstr[516]={0};
+    const int maxi = min(Spaces+2-curr_space, 512);
+    for (int i = 0; i < maxi; i++) bstr[i]='\b'; // Keep up to `[`+{curr_space-1}. I.e. curr_space == 2: `[=`.
     printf("%s",bstr);
     printf("%s",Progress);
 
-    for (; curr_space < target_space-1; curr_space++)
+    // Fill up with progress (`=`) up to target_space - 1 (the target_space character will be decided next)
+    for (; ++curr_space < target_space;)
       printf("%s",Progress);
 
+    // curr_space is the latest target_space for next iterations.
     curr_space=target_space;
 
     if (target_space < Spaces) {
+      // If we have at least 1 more space before completion, use arrow to fill it: ...`> ]`
       printf("%s",Arrow);
       int cnt = 0;
       for (; target_space < Spaces; target_space++) bstr[cnt++] = ' ';
@@ -114,10 +116,13 @@ int vkpProgressBar::Update(float iter_value) {
       printf("%s",bstr);
       printf("%s",Close);
     }
-    else { printf("%s",Progress); }
+    else {
+      // If not, then close: ...`=]`
+      printf("%s%s",Progress,Close);
+    }
   }
-  fflush(stdout);
-  if (curr_space > Spaces) curr_space = Spaces;
+  std::fflush(stdout);
+
   #ifdef __ECSOBJ__
     _ERRI(target_space < curr_space,"vkpProgressBar():: Negative progress not supported!")
   #else
